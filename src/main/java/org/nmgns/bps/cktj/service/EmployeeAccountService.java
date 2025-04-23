@@ -132,6 +132,7 @@ public class EmployeeAccountService {
         for (TellerPercentage tp:employeeAccount.getTellerTaskPercentageList()){
             TellerPercentage tmpTellerPercentage = new TellerPercentage();
             tmpTellerPercentage.setTellerCode(tp.getTellerCode());
+            tmpTellerPercentage.setMainTeller(tp.getMainTeller());
             tmpTellerPercentage.setPercentage(tp.getPercentage());
             tmpTellerPercentage.setStartDate(dbUnboundDepositAccount.getStartDate());
             tmpTellerPercentage.setValidFlag(false);
@@ -326,46 +327,70 @@ public class EmployeeAccountService {
 
     /**
      * 获取任务数可变更揽储人的账户信息列表
-     * @param tellerPercentage 包含分页信息
+     * @param employeeAccount 包含分页信息、搜索信息
      */
-    public PageData<TellerPercentage> findTaskModifiableTellerPercentagePage(TellerPercentage tellerPercentage) {
-        if (null == tellerPercentage || tellerPercentage.getPage() == null) throw new RuntimeException("未提供参数");
+    public PageData<EmployeeAccount> findTaskModifiableEmployeeAcountPage(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || employeeAccount.getPage() == null) throw new RuntimeException("未提供参数");
 
-        tellerPercentage.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/gettaskmodifiableaccount").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+        employeeAccount.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/gettaskmodifiableaccount").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
 
         //设置pageNo
-        tellerPercentage.setPage(new Page(tellerPercentage.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+        employeeAccount.setPage(new Page(employeeAccount.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
 
-        PageData<TellerPercentage> tellerPercentagePageData = new PageData<>();
-        Long count = employeeAccountDao.findTaskModifiableAccountCount(tellerPercentage);
-        List<TellerPercentage> tellerPercentageList = employeeAccountDao.findTaskModifiableAccount(tellerPercentage);
+        PageData<EmployeeAccount> employeeAccountPageData = new PageData<>();
+        Long count = employeeAccountDao.findTaskModifiableAccountCount(employeeAccount);
+        List<EmployeeAccount> employeeAccountList = employeeAccountDao.findTaskModifiableAccount(employeeAccount);
 
-        tellerPercentagePageData.setTotal(count);
-        tellerPercentagePageData.setList(tellerPercentageList);
+        for (int i=0;i<employeeAccountList.size();i++){
+            EmployeeAccount ea = employeeAccountList.get(i);
+            TellerPercentage tp = new TellerPercentage();
+            tp.setAccountNo(ea.getAccountNo());
+            tp.setChildAccountNo(ea.getChildAccountNo());
+            tp.setRegisterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);   //查找登记已复核的
+            tp.setValidFlag(true);
 
-        return tellerPercentagePageData;
+            List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tp);
+            employeeAccountList.get(i).setTellerTaskPercentageList(tellerTaskPercentageList);
+        }
+
+        employeeAccountPageData.setTotal(count);
+        employeeAccountPageData.setList(employeeAccountList);
+
+        return employeeAccountPageData;
     }
 
     /**
      * 获取计酬数可变更揽储人的账户信息列表
-     * @param tellerPercentage 包含分页信息
+     * @param employeeAccount 包含分页信息、搜索参数信息
      */
-    public PageData<TellerPercentage> findPaymentModifiableTellerPercentagePage(TellerPercentage tellerPercentage) {
-        if (null == tellerPercentage || tellerPercentage.getPage() == null) throw new RuntimeException("未提供参数");
+    public PageData<EmployeeAccount> findPaymentModifiableTellerPercentagePage(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || employeeAccount.getPage() == null) throw new RuntimeException("未提供参数");
 
-        tellerPercentage.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/gettaskmodifiableaccount").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+        employeeAccount.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/gettaskmodifiableaccount").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
 
         //设置pageNo
-        tellerPercentage.setPage(new Page(tellerPercentage.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+        employeeAccount.setPage(new Page(employeeAccount.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
 
-        PageData<TellerPercentage> tellerPercentagePageData = new PageData<>();
-        Long count = employeeAccountDao.findPaymentModifiableAccountCount(tellerPercentage);
-        List<TellerPercentage> tellerPercentageList = employeeAccountDao.findPaymentModifiableAccount(tellerPercentage);
+        PageData<EmployeeAccount> employeeAccountPageData = new PageData<>();
+        Long count = employeeAccountDao.findPaymentModifiableAccountCount(employeeAccount);
+        List<EmployeeAccount> employeeAccountList = employeeAccountDao.findPaymentModifiableAccount(employeeAccount);
 
-        tellerPercentagePageData.setTotal(count);
-        tellerPercentagePageData.setList(tellerPercentageList);
+        for (int i=0;i<employeeAccountList.size();i++){
+            EmployeeAccount ea = employeeAccountList.get(i);
+            TellerPercentage tp = new TellerPercentage();
+            tp.setAccountNo(ea.getAccountNo());
+            tp.setChildAccountNo(ea.getChildAccountNo());
+            tp.setRegisterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);   //查找登记已复核的
+            tp.setValidFlag(true);
 
-        return tellerPercentagePageData;
+            List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tp);
+            employeeAccountList.get(i).setTellerPaymentPercentageList(tellerTaskPercentageList);
+        }
+
+        employeeAccountPageData.setTotal(count);
+        employeeAccountPageData.setList(employeeAccountList);
+
+        return employeeAccountPageData;
     }
 
     /**

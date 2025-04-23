@@ -48,12 +48,20 @@ public interface EmployeeAccountDao {
 
     public EmployeeAccount getEmployeeAccountByAccountNoAndChildAccountNoFromTask(TellerPercentage tp);
 
-    public Long findTaskModifiableAccountCount(TellerPercentage tp);
+    public Long findValidTaskTellerPercentageCount(TellerPercentage tp);
 
-    public List<TellerPercentage> findTaskModifiableAccount(TellerPercentage tp);
+    public List<TellerPercentage> findValidTaskTellerPercentage(TellerPercentage tp);
 
-    public Long findPaymentModifiableAccountCount(TellerPercentage tp);
+    public Long findValidPaymentTellerPercentageCount(TellerPercentage tp);
 
-    public List<TellerPercentage> findPaymentModifiableAccount(TellerPercentage tp);
+    public List<TellerPercentage> findValidPaymentTellerPercentage(TellerPercentage tp);
+
+    public Long findTaskModifiableAccountCount(EmployeeAccount ea);
+
+    public List<EmployeeAccount> findTaskModifiableAccount(EmployeeAccount ea);
+
+    public Long findPaymentModifiableAccountCount(EmployeeAccount ea);
+
+    public List<EmployeeAccount> findPaymentModifiableAccount(EmployeeAccount ea);
 
 }

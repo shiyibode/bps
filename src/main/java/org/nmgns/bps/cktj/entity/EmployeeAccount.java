@@ -1,5 +1,6 @@
 package org.nmgns.bps.cktj.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.nmgns.bps.cktj.utils.TypeString;
@@ -60,10 +61,38 @@ public class EmployeeAccount extends BaseDataScopePageEntity<EmployeeAccount> {
         return accountOpenDate;
     }
 
-//    @JsonFormat(pattern = "yyyy-MM-dd")
-//    public Date getCloseDate() {
-//        return closeDate;
-//    }
+
+    // 以字符串形式返回任务数分成信息
+    public String getTellerTaskPercentageStr() {
+        if (tellerTaskPercentageList != null && !tellerTaskPercentageList.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (TellerPercentage tp : tellerTaskPercentageList) {
+                sb.append(tp.getTellerName());
+                sb.append(":");
+                sb.append(tp.getPercentage()*100);
+                sb.append("%, ");
+            }
+            return StrUtil.removeSuffix(sb.toString(),", ");
+        }
+
+        return null;
+    }
+
+    // 以字符串形式返回计酬数分成信息
+    public String getTellerPaymentPercentageStr() {
+        if (tellerPaymentPercentageList != null && !tellerPaymentPercentageList.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (TellerPercentage tp : tellerPaymentPercentageList) {
+                sb.append(tp.getTellerName());
+                sb.append(":");
+                sb.append(tp.getPercentage()*100);
+                sb.append("%, ");
+            }
+            return StrUtil.removeSuffix(sb.toString(),", ");
+        }
+
+        return null;
+    }
 
 
 

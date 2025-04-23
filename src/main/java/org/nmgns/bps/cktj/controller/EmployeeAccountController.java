@@ -1,7 +1,6 @@
 package org.nmgns.bps.cktj.controller;
 
 import org.nmgns.bps.cktj.entity.EmployeeAccount;
-import org.nmgns.bps.cktj.entity.TellerPercentage;
 import org.nmgns.bps.cktj.service.EmployeeAccountService;
 import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
@@ -9,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/cktj/employeeaccount")
@@ -137,18 +133,18 @@ public class EmployeeAccountController {
 
     /**
      * 获取任务数可变更揽储人的账户信息列表
-     * @param tellerPercentage 包含分页信息、搜索信息
+     * @param employeeAccount 包含分页信息、搜索信息
      */
     @RequestMapping(value = "/gettaskmodifiableaccount")
     @PreAuthorize("hasAuthority('cktj:employeeaccount:gettaskmodifiableaccount')")
-    public ResponseJson getTaskModifiableAccount(@RequestBody TellerPercentage tellerPercentage) {
+    public ResponseJson getTaskModifiableAccount(@RequestBody EmployeeAccount employeeAccount) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findTaskModifiableTellerPercentagePage(tellerPercentage);
+            PageData<EmployeeAccount> employeeAccountPageData = employeeAccountService.findTaskModifiableEmployeeAcountPage(employeeAccount);
             responseJson.setSuccess(true);
-            responseJson.setData(tellerPercentagePageData.getList());
-            responseJson.setTotal(tellerPercentagePageData.getTotal());
+            responseJson.setData(employeeAccountPageData.getList());
+            responseJson.setTotal(employeeAccountPageData.getTotal());
             responseJson.setMsg("获取任务数可变更揽储人列表成功");
         }catch (Exception e) {
             responseJson.setSuccess(false);
@@ -160,18 +156,18 @@ public class EmployeeAccountController {
 
     /**
      * 获取计酬数可变更揽储人的账户信息列表
-     * @param tellerPercentage 包含分页信息、搜索信息
+     * @param employeeAccount 包含分页信息、搜索信息
      */
     @RequestMapping(value = "/getpaymentmodifiableaccount")
     @PreAuthorize("hasAuthority('cktj:employeeaccount:getpaymentmodifiableaccount')")
-    public ResponseJson getPaymentModifiableAccount(@RequestBody TellerPercentage tellerPercentage) {
+    public ResponseJson getPaymentModifiableAccount(@RequestBody EmployeeAccount employeeAccount) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findPaymentModifiableTellerPercentagePage(tellerPercentage);
+            PageData<EmployeeAccount> employeeAccountPageData = employeeAccountService.findPaymentModifiableTellerPercentagePage(employeeAccount);
             responseJson.setSuccess(true);
-            responseJson.setData(tellerPercentagePageData.getList());
-            responseJson.setTotal(tellerPercentagePageData.getTotal());
+            responseJson.setData(employeeAccountPageData.getList());
+            responseJson.setTotal(employeeAccountPageData.getTotal());
             responseJson.setMsg("获取计酬数可变更揽储人列表成功");
         }catch (Exception e) {
             responseJson.setSuccess(false);
