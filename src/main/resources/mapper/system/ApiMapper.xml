@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.system.dao.ApiDao">
+    <select id="getApiById" resultType="org.nmgns.bps.system.entity.Api" parameterType="java.lang.Long">
+        SELECT * FROM bps_78000.t_sys_api where id = #{id}
+    </select>
+
+    <select id="getAllApi" resultType="org.nmgns.bps.system.entity.Api">
+        SELECT * FROM bps_78000.t_sys_api
+    </select>
+
+    <select id="getApiByUri" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Api">
+        select *
+        from bps_78000.t_sys_api where uri = #{uri};
+    </select>
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Api" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bps_78000.t_sys_api(name, uri, permission, remarks, create_by, create_time)
+        VALUES (
+                #{name},
+                #{uri},
+                #{permission},
+                #{remarks},
+                #{createBy},
+                #{createTime}
+               )
+    </insert>
+
+    <update id="update" parameterType="org.nmgns.bps.system.entity.Api">
+        UPDATE bps_78000.t_sys_api
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="uri != null and uri != ''">uri = #{uri},</if>
+            <if test="permission != null and permission != ''">permission = #{permission},</if>
+            <if test="isSys != null and isSys != ''">is_sys = #{isSys},</if>
+            <if test="usable != null ">usable = #{usable},</if>
+            <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_api where id = #{id}
+    </delete>
+
+    <select id="getCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.Api">
+        select count(*)
+        from
+            bps_78000.t_sys_api a
+    </select>
+
+    <select id="get" resultType="org.nmgns.bps.system.entity.Api" parameterType="org.nmgns.bps.system.entity.Api">
+        select
+            id,
+            name ,
+            uri,
+            permission,
+            remarks,
+            create_by,
+            create_time,
+            update_by,
+            update_time
+        from
+            bps_78000.t_sys_api a
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY a.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+</mapper>

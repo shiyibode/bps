@@ -1,0 +1,382 @@
+package org.nmgns.bps.system.service;
+
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
+import org.nmgns.bps.system.dao.ApiDao;
+import org.nmgns.bps.system.dao.LogDao;
+import org.nmgns.bps.system.dao.RoleDao;
+import org.nmgns.bps.system.dao.UserDao;
+import org.nmgns.bps.system.entity.*;
+import org.nmgns.bps.system.utils.DataScopeUtils;
+import org.nmgns.bps.system.utils.DefaultConfig;
+import org.nmgns.bps.system.utils.PageData;
+import org.nmgns.bps.system.utils.UserUtils;
+import org.nmgns.bps.system.utils.base.Page;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+    private UserUtils userUtils;
+    @Autowired
+    private RoleDao roleDao;
+    @Autowired
+    private LogDao logDao;
+    @Autowired
+    private ApiDao apiDao;
+    @Autowired
+    private DictionaryService dictionaryService;
+
+    @Cacheable("userByCode")
+    public User getUserByCode(String code) {
+        return userDao.getUserByCode(code);
+    }
+
+    @CacheEvict(value = "userByCode", allEntries = true)
+    public void updateUser(User user){
+        userDao.update(user);
+    }
+
+    @Transactional
+    @CacheEvict(value = "userByCode", allEntries = true)
+    public void updateLoginPassword(Long userId, String newLoginPassword) throws RuntimeException{
+        if (userId == null || StrUtil.isBlank(newLoginPassword)) throw new RuntimeException("参数为空");
+        if (StrUtil.length(newLoginPassword) < 6) throw new RuntimeException("密码必须超过6位数");
+
+        User dbUser = userDao.getUserById(userId);
+        if (null == dbUser) throw new RuntimeException("用户不存在");
+
+        User user = new User();
+        user.setId(userId);
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        String encryptPassword = bCryptPasswordEncoder.encode(newLoginPassword);
+        user.setLoginPassword(encryptPassword);
+        userDao.update(user);
+    }
+
+    @Transactional
+    @CacheEvict(value = "userByCode", allEntries = true)
+    public void resetPassword(Long userId) throws RuntimeException{
+        if (userId == null ) throw new RuntimeException("参数为空");
+
+        User dbUser = userDao.getUserById(userId);
+        if (null == dbUser) throw new RuntimeException("用户不存在");
+
+        User user = new User();
+        user.setId(userId);
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        String encryptPassword = bCryptPasswordEncoder.encode(DefaultConfig.RESET_ORIG_PASSWORD);
+        user.setLoginPassword(encryptPassword);
+        userDao.update(user);
+    }
+
+    /**
+     * 修改用户的在职机构
+     * @param userId 用户id
+     * @param newOrganizationId 新机构id
+     * @param remarks 备注
+     */
+    @Transactional
+    public void alterOrganization(Long userId, Long newOrganizationId, String remarks) throws RuntimeException{
+
+        UserOrganization dbUserOrganization = userDao.getValidUserOrganizationByUserId(userId);
+        if (null == dbUserOrganization) {
+            throw new RuntimeException("机构调动失败, 获取用户机构信息时出错!");
+        }
+
+        //调入机构与当前机构为同一机构
+        if (dbUserOrganization.getOrganizationId().equals(newOrganizationId)) {
+            throw new RuntimeException("机构调动失败, 该用户当前机构与调入机构为同一机构!");
+        }
+
+        // 计算原机构的终止日期
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar calendar = Calendar.getInstance();
+        Date today,yesterday;
+        UserOrganization uo = new UserOrganization();
+        try {
+            today = sdf.parse(sdf.format(new Date()));
+            calendar.setTime(today);
+            calendar.add(Calendar.DATE,-1);
+            yesterday = calendar.getTime();
+        } catch (Exception e){
+            throw new RuntimeException("机构调动失败，时间解析错误");
+        }
+
+        //同一天发生多次调动
+        if (dbUserOrganization.getStartDate().equals(today)){
+            uo.setParentId(dbUserOrganization.getParentId());  //设置新记录的parentId为原纪录的parentId
+            userDao.deleteUserOrganizationById(dbUserOrganization.getId());  //删除当日的原记录
+        }
+        else{ //当日的第一次调动
+            //更新原记录，使得原记录无效
+            UserOrganization temp = new UserOrganization();
+            temp.setId(dbUserOrganization.getId());
+            temp.setEndDate(yesterday);
+            temp.setValidFlag(false);
+            temp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            temp.setUpdateTime(new Date());
+            userDao.updateUserOrganizationById(temp);
+            uo.setParentId(dbUserOrganization.getId());
+        }
+
+        //写入新记录信息
+        uo.setUserId(userId);
+        uo.setOrganizationId(newOrganizationId);
+        uo.setStartDate(today);
+        uo.setValidFlag(true);
+        uo.setRemarks(remarks);
+        uo.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        uo.setCreateTime(new Date());
+        userDao.insertUserOrganization(uo);
+
+        //写入日志
+        Log log = new Log();
+        log.setUserId(userId);
+        log.setRemarks("修改用户机构");
+        log.setCreateTime(new Date());
+        log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        log.setOperation("XGYHJG");
+        logDao.insert(log);
+    }
+
+
+    /**
+     * 修改用户角色
+     * @param userId 用户id
+     * @param roleIdList 角色id列表
+     */
+    @CacheEvict(value = {"userRoles"}, allEntries = true)
+    @Transactional
+    public void alterRole(Long userId, List<Long> roleIdList) {
+        if (null == userId || null == roleIdList || roleIdList.isEmpty()) throw new RuntimeException("未提供参数");
+
+        //删除原始全部角色
+        roleDao.deleteUserRoleByUserId(userId);
+        //新写入角色
+        for (Long roleId:roleIdList){
+            UserRole userRole = new UserRole();
+            userRole.setUserId(userId);
+            userRole.setRoleId(roleId);
+            roleDao.insertUserRole(userRole);
+        }
+
+        //写入日志
+        Log log = new Log();
+        log.setUserId(userId);
+        log.setRemarks("修改用户角色");
+        log.setCreateTime(new Date());
+        log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        log.setOperation("XGYHJS");
+        logDao.insert(log);
+    }
+
+    /**
+     * 获取分页的用户信息，用于前端-系统设置-用户管理中的用户信息列表展示
+     * @param userPara 参数信息，必须包含分页pageNo，允许使用搜索参数code(用户编号)、organizationId(机构id)
+     */
+    public PageData<User> getUserListPage(User userPara) throws RuntimeException{
+        // 获取接口id，通过接口可以获取到数据范围
+        Long apiId = apiDao.getApiByUri("/sys/user/get").getId();
+        if (apiId == null) throw new RuntimeException("获取接口信息失败");
+        Long paraOrganizationId = userPara.getOrganizationId();
+
+        // 获取用户的在职机构
+        User dbUser = userUtils.getCurrentLoginedUser();
+        if (null == dbUser || dbUser.getId() == null || dbUser.getAdminFlag() == null) throw new RuntimeException("获取用户信息失败");
+        if (!dbUser.isAdmin()){ //超级用户无机构，跳过
+            UserOrganization uo = userDao.getValidUserOrganizationByUserId(dbUser.getId());
+            if (uo ==null || uo.getOrganizationId() == null) throw new RuntimeException("获取用户在职机构失败");
+
+            // 设置权限过滤时需要的当前在职机构的organizationId
+            userPara.setOrganizationId(uo.getOrganizationId());
+        }
+        userPara.setAdminFlag(dbUser.getAdminFlag());   //设置adminFlag，用于在dsf中判断权限
+
+        //设置权限过滤时需要的roleApiList
+        List<RoleApi> roleApiList = roleDao.getRoleApiPermissionsByUserId(dbUser.getId());
+        userPara.setRoleApiList(roleApiList);
+
+        //设置权限信息
+        HashMap<String, String> sqlMap = new HashMap<>();
+        sqlMap.put("dsf", DataScopeUtils.dataScopeFilter(apiId, userPara, "o", null));
+        userPara.setSqlMap(sqlMap);
+        userPara.setOrganizationId(paraOrganizationId);   //机构权限已添加在dsf中，这里恢复为前端提交的organizationId，用于过滤搜索结果
+
+        //设置分页信息
+        userPara.setPage(new Page(userPara.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+        Long userListCount = userDao.getCount(userPara);
+        List<User> userList = userDao.get(userPara);
+
+        //设置返回的职位信息、查找当前最新的状态信息
+        for (int i=0;i<userList.size();i++){
+            userList.get(i).setPostStr(dictionaryService.getDictionaryNameByCode(userList.get(i).getPost()));
+            userList.get(i).setStatusStr(dictionaryService.getDictionaryNameByCode(userList.get(i).getStatus()));
+        }
+
+        PageData<User> userPageData = new PageData<>();
+        userPageData.setList(userList);
+        userPageData.setTotal(userListCount);
+        userPageData.setPageNo(userPara.getPageNo());
+        userPageData.setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
+
+        return userPageData;
+    }
+
+    /**
+     * 新增用户
+     * @param userPara 前端提交的用户基础信息
+     */
+    @Transactional
+    public void create(User userPara) throws RuntimeException{
+        if (null == userPara || StrUtil.isBlank(userPara.getCode()) || StrUtil.isBlank(userPara.getName()) || null == userPara.getEntryDate() || StrUtil.isBlank(userPara.getStatus()) || StrUtil.isBlank(userPara.getPost())) throw new RuntimeException("新增用户时未提供参数");
+
+        //新增用户时,设置默认密码
+        userPara.setLoginPassword(new BCryptPasswordEncoder().encode(DefaultConfig.RESET_ORIG_PASSWORD));
+        // 默认允许登录
+        userPara.setLoginUsable(Boolean.TRUE);
+        // 默认非超级用户
+        userPara.setAdminFlag(Boolean.FALSE);
+        userPara.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        userPara.setCreateTime(new Date());
+        Dictionary dictionary = dictionaryService.getDictionaryByCode(userPara.getPost());
+        if (null == dictionary) throw new RuntimeException("无效的用户职位代码");
+        userDao.insert(userPara);
+        if (userPara.getId() == null) throw new RuntimeException("新增用户失败");
+
+        //写入用户机构
+        UserOrganization uo = new UserOrganization();
+        uo.setUserId(userPara.getId());
+        uo.setOrganizationId(userPara.getOrganizationId());
+        uo.setValidFlag(Boolean.TRUE);
+        uo.setStartDate(userPara.getEntryDate());
+        uo.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        uo.setCreateTime(new Date());
+        userDao.insertUserOrganization(uo);
+
+        //写入用户状态
+        UserStatus userStatus = new UserStatus();
+        userStatus.setUserId(userPara.getId());
+        userStatus.setStartDate(userPara.getEntryDate());
+        dictionary = dictionaryService.getDictionaryByCode(userPara.getStatus());
+        if (null == dictionary) throw new RuntimeException("无效的用户在职状态代码");
+        userStatus.setStatus(userPara.getStatus());
+        userStatus.setValidFlag(Boolean.TRUE);  //新增用户，默认设置用户状态有效
+        userStatus.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        userStatus.setCreateTime(new Date());
+        userDao.insertUserStatus(userStatus);
+
+        //写入日志
+        Log log = new Log();
+        log.setUserId(userPara.getId());
+        log.setRemarks("新建用户");
+        log.setCreateTime(new Date());
+        log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        log.setOperation("XJYH");
+        logDao.insert(log);
+    }
+
+    /**
+     * 修改用户信息
+     * @param userPara 前端提交的用户基础信息
+     */
+    @Transactional
+    public void update(User userPara) throws RuntimeException{
+        if (null == userPara || userPara.getId() == null ) throw new RuntimeException("修改用户信息时未提供参数");
+
+        //只允许修改：name、mobile、identityNo、post、birthday、sex
+        User dbUser = userDao.getUserById(userPara.getId());
+        User tmpUser = new User();
+        tmpUser.setId(userPara.getId());
+        if (!StrUtil.equals(userPara.getName(), dbUser.getName())){
+            tmpUser.setName(userPara.getName());
+        }
+        if (!StrUtil.equals(userPara.getMobile(), dbUser.getMobile())){
+            tmpUser.setMobile(userPara.getMobile());
+        }
+        if (!StrUtil.equals(userPara.getIdentityNo(), dbUser.getIdentityNo())){
+            tmpUser.setIdentityNo(userPara.getIdentityNo());
+        }
+        if (!StrUtil.equals(userPara.getPost(), dbUser.getPost())){
+            tmpUser.setPost(userPara.getPost());
+        }
+        if (!StrUtil.equals(userPara.getSex(), dbUser.getSex())){
+            tmpUser.setSex(userPara.getSex());
+        }
+        if (userPara.getBirthday() != null && !userPara.getBirthday().equals(dbUser.getBirthday())){
+            tmpUser.setBirthday(userPara.getBirthday());
+        }
+        userDao.update(tmpUser);
+
+        // 允许修改用户在职状态
+        if (StrUtil.isNotBlank(userPara.getStatus())){
+            UserStatus dbUserStatus = userDao.getValidUserStatusByUserId(userPara.getId());
+            if (!StrUtil.equals(userPara.getStatus(), dbUserStatus.getStatus())){
+                //修改旧状态为无效
+                UserStatus tmpUserStatus = new UserStatus();
+                tmpUserStatus.setId(dbUserStatus.getId());
+                tmpUserStatus.setEndDate(DateUtil.yesterday());
+                tmpUserStatus.setValidFlag(Boolean.FALSE);
+                tmpUserStatus.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+                tmpUserStatus.setUpdateTime(new Date());
+                userDao.updateUserStatusById(tmpUserStatus);
+                //写入新状态
+                tmpUserStatus = new UserStatus();
+                tmpUserStatus.setStartDate(DateUtil.parseDate(DateUtil.today()));
+                tmpUserStatus.setStatus(userPara.getStatus());
+                tmpUserStatus.setValidFlag(Boolean.TRUE);
+                tmpUserStatus.setParentId(dbUserStatus.getId());
+                tmpUserStatus.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+                tmpUserStatus.setCreateTime(new Date());
+                userDao.insertUserStatus(tmpUserStatus);
+            }
+        }
+
+        //写入日志
+        Log log = new Log();
+        log.setUserId(userPara.getId());
+        log.setRemarks("修改用户基础信息");
+        log.setCreateTime(new Date());
+        log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        log.setOperation("XJYHJCXX");
+        logDao.insert(log);
+    }
+
+    /**
+     * 删除用户（逻辑删除）
+     * @param userId 用户id
+     */
+    public void delete(Long userId) throws RuntimeException{
+        if(userId == null ) throw new RuntimeException("删除用户时未提供参数");
+
+        userDao.delete(userId);
+
+        //写入日志
+        Log log = new Log();
+        log.setUserId(userId);
+        log.setRemarks("删除用户");
+        log.setCreateTime(new Date());
+        log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        log.setOperation("SCYH");
+        logDao.insert(log);
+    }
+
+
+
+
+
+}

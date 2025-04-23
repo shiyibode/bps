@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.nmgns.bps.cktj.dao.DepositCategoryDao">
+    <resultMap id="depositCategoryResult" type="org.nmgns.bps.cktj.entity.DepositCategory">
+        <id property="id" column="id" />
+        <result property="parentId" column="parent_id" />
+        <result property="parentIds" column="parent_ids" typeHandler="org.apache.ibatis.type.ArrayTypeHandler"/>
+        <result property="no" column="no" />
+        <result property="name" column="name" />
+        <result property="depositType" column="deposit_type" />
+        <result property="customerType" column="customer_type" />
+        <result property="belongTo" column="belong_to" />
+        <result property="subjectNo" column="subject_no" typeHandler="org.apache.ibatis.type.ArrayTypeHandler" />
+        <result property="validFlag" column="valid_flag" />
+        <result property="remarks" column="remarks" />
+        <result property="sort" column="sort" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="depositCategoryColumns">
+        a.id,
+        a.parent_id,
+        a.parent_ids,
+        a.no,
+        a.name,
+        a.deposit_type,
+        a.customer_type,
+        a.account_type,
+        a.belong_to,
+        a.subject_no,
+        a.valid_flag,
+        a.remarks,
+        a.sort,
+        a.create_by ,
+        a.create_time,
+        a.update_by ,
+        a.update_time
+    </sql>
+
+    <select id="getById" resultMap="depositCategoryResult">
+        SELECT
+        <include refid="depositCategoryColumns"/>
+        FROM bps_78000.t_cktj_deposit_category a
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="getAll" resultMap="depositCategoryResult">
+        SELECT
+        <include refid="depositCategoryColumns"/>
+        FROM bps_78000.t_cktj_deposit_category a
+        ORDER BY a.sort
+    </select>
+
+    <select id="getByParentId" resultMap="depositCategoryResult">
+        SELECT
+        <include refid="depositCategoryColumns"/>
+        FROM bps_78000.t_cktj_deposit_category a
+        WHERE a.parent_id = #{parentId}
+        ORDER BY a.sort
+    </select>
+
+<!--    <select id="findByParentIdsLike" resultMap="depositCategoryResult">-->
+<!--        SELECT-->
+<!--        a.id,-->
+<!--        a.parent_id,-->
+<!--        a.parent_ids-->
+<!--        FROM bps_78000.t_cktj_deposit_category a-->
+<!--        WHERE-->
+<!--            a.parent_ids @> ARRAY[-->
+<!--                <foreach collection="parentIds" item="id" separator=",">-->
+<!--                    #{id}-->
+<!--                </foreach>-->
+<!--                ]::bigint[]-->
+<!--        ORDER BY a.sort-->
+<!--    </select>-->
+
+
+    <insert id="insert" parameterType="org.nmgns.bps.cktj.entity.DepositCategory" useGeneratedKeys="true">
+        <selectKey resultType="java.lang.Long"  order="AFTER" keyProperty="id" >
+            SELECT currval('bps_78000.t_cktj_deposit_category_id_seq') AS id
+        </selectKey>
+        INSERT INTO bps_78000.t_cktj_deposit_category
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="parentIds != null ">
+                parent_ids,
+            </if>
+            <if test="no != null">
+                no,
+            </if>
+            <if test="name != null">
+                name,
+            </if>
+            <if test="depositType != null">
+                deposit_type,
+            </if>
+            <if test="customerType != null">
+                customer_type,
+            </if>
+            <if test="accountType != null">
+                account_type,
+            </if>
+            <if test="belongTo != null">
+                belong_to,
+            </if>
+            <if test="subjectNo != null">
+                subject_no,
+            </if>
+            <if test="validFlag != null">
+                valid_flag,
+            </if>
+            <if test="remarks != null">
+                remarks,
+            </if>
+            <if test="sort != null">
+                sort,
+            </if>
+            <if test="createBy != null and updateBy.id != null">
+                create_by,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="updateBy != null and updateBy.id != null">
+                update_by,
+            </if>
+            <if test="updateTime != null">
+                update_time
+            </if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">
+                #{parentId},
+            </if>
+            <if test="parentIds != null ">
+                #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+            </if>
+            <if test="no != null">
+                #{no},
+            </if>
+            <if test="name != null">
+                #{name},
+            </if>
+            <if test="depositType != null">
+                #{depositType},
+            </if>
+            <if test="customerType != null">
+                #{customerType},
+            </if>
+            <if test="accountType != null">
+                #{accountType},
+            </if>
+            <if test="belongTo != null">
+                #{belongTo},
+            </if>
+            <if test="subjectNo != null">
+                #{subjectNo, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+            </if>
+            <if test="validFlag != null">
+                #{validFlag},
+            </if>
+            <if test="remarks != null">
+                #{remarks},
+            </if>
+            <if test="sort != null">
+                #{sort},
+            </if>
+            <if test="createBy != null and updateBy.id != null">
+                #{createBy.id},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="updateBy != null and updateBy.id != null">
+                #{updateBy.id},
+            </if>
+            <if test="updateTime != null">
+                #{updateTime}
+            </if>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="org.nmgns.bps.cktj.entity.DepositCategory">
+        UPDATE bps_78000.t_cktj_deposit_category
+        <set>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="parentIds != null">
+                parent_ids = #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+            </if>
+            <if test="no != null">
+                no = #{no},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="depositType != null">
+                deposit_type = #{depositType},
+            </if>
+            <if test="customerType != null">
+                customer_type = #{customerType},
+            </if>
+            <if test="accountType != null">
+                account_type = #{accountType},
+            </if>
+            <if test="belongTo != null">
+                belong_to = #{belongTo},
+            </if>
+            <if test="subjectNo != null">
+                subject_no = #{subjectNo, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+            </if>
+            <if test="validFlag != null">
+                valid_flag = #{validFlag},
+            </if>
+            <if test="remarks != null">
+                remarks = #{remarks},
+            </if>
+            <if test="sort != null">
+                sort = #{sort},
+            </if>
+            <if test="updateBy != null and updateBy.id != null">
+                update_by = #{updateBy.id},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+<!--    <update id="updateParentIds" parameterType="org.nmgns.bps.cktj.entity.DepositCategory">-->
+<!--        UPDATE bps_78000.t_cktj_deposit_category-->
+<!--        SET-->
+<!--            parent_ids = #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler}-->
+<!--        WHERE id = #{id}-->
+<!--    </update>-->
+
+<!--    <update id="updateSort"  parameterType="org.nmgns.bps.cktj.entity.DepositCategory">-->
+<!--        UPDATE bps_78000.t_cktj_deposit_category SET-->
+<!--        sort = #{sort}-->
+<!--        WHERE id = #{id}-->
+<!--    </update>-->
+
+    <update id="delete">
+        DELETE FROM  bps_78000.t_cktj_deposit_category
+        WHERE id = #{id} OR parent_ids @> CAST(ARRAY[#{id}] AS INTEGER[])
+    </update>
+
+</mapper>

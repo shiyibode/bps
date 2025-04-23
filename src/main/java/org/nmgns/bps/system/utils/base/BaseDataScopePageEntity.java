@@ -1,0 +1,28 @@
+package org.nmgns.bps.system.utils.base;
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Setter;
+
+
+public class BaseDataScopePageEntity<T> extends BaseDataScopeEntity {
+
+    @JsonIgnore
+    @Setter
+    protected Page page;
+
+    public Page getPage() {
+        if (page == null) {page = new Page();}
+        return page;
+    }
+
+    // 保存前端上传的分页信息
+    public void setPageNo(int pageNo) {
+        this.getPage().setPageNo(pageNo);
+    }
+
+    public int getPageNo() {
+        return this.getPage().getPageNo();
+    }
+
+}

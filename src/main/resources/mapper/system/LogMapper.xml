@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.system.dao.LogDao">
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Log">
+        INSERT INTO public.t_sys_log(user_id, operation, remarks, create_time, create_by) VALUES (#{userId}, #{operation}, #{remarks}, #{createTime}, #{createBy})
+    </insert>
+    
+
+
+</mapper>

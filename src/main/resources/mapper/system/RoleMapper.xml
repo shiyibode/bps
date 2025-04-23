@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.system.dao.RoleDao">
+
+    <resultMap id="apiPermissionResultMap" type="org.nmgns.bps.system.entity.ApiPermission">
+        <id property="id" column="id"/>
+        <result property="dataScope" column="data_scope" />
+        <association property="api" javaType="org.nmgns.bps.system.entity.Api">
+            <id property="id" column="api_id"/>
+            <result property="name" column="api_name"/>
+            <result property="uri" column="api_uri"/>
+            <result property="permission" column="api_permission"/>
+            <result property="remarks" column="api_remarks"/>
+            <result property="createBy" column="api_create_by"/>
+            <result property="createTime" column="api_create_time"/>
+        </association>
+    </resultMap>
+
+    <select id="getRoleApiPermissionsByRoleId" resultMap="apiPermissionResultMap" parameterType="java.lang.Long">
+        SELECT
+            rp.id,
+            rp.data_scope,
+            rp.api_id,
+            a.name as api_name,
+            a.uri as api_uri,
+            a.permission as api_permission,
+            a.remarks as api_remarks,
+            a.create_by as api_create_by,
+            a.create_time as api_create_time
+        from
+            bps_78000.t_sys_role_permission rp join bps_78000.t_sys_api a on rp.api_id = a.id
+        where rp.role_id = #{roleId}
+    </select>
+
+    <select id="getRoleApiById" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.RoleApi">
+        select * from bps_78000.t_sys_role_permission where id = #{id}
+    </select>
+    
+    <resultMap id="organizationResultMap" type="org.nmgns.bps.system.entity.Organization">
+        <id property="id" column="org_id" />
+        <result property="code" column="org_code" />
+        <result property="name" column="org_name" />
+        <result property="type" column="org_type" />
+    </resultMap>
+
+    <resultMap id="roleApiPermissionResultMap" type="org.nmgns.bps.system.entity.RoleApi">
+        <id property="id" column="id"/>
+        <result property="dataScope" column="data_scope" />
+        <result property="createTime" column="create_time" />
+        <result property="createBy" column="create_by" />
+        <association property="role" javaType="org.nmgns.bps.system.entity.Role">
+            <id property="id" column="role_id"/>
+            <result property="name" column="role_name"/>
+            <result property="enName" column="role_en_name"/>
+            <result property="roleType" column="role_role_type"/>
+            <result property="isSys" column="role_is_sys"/>
+            <result property="usable" column="role_usable"/>
+            <result property="createBy" column="role_create_by"/>
+            <result property="createTime" column="role_create_time"/>
+        </association>
+        <association property="api" javaType="org.nmgns.bps.system.entity.Api">
+            <id property="id" column="api_id"/>
+            <result property="name" column="api_name"/>
+            <result property="uri" column="api_uri"/>
+            <result property="permission" column="api_permission"/>
+            <result property="remarks" column="api_remarks"/>
+            <result property="createBy" column="api_create_by"/>
+            <result property="createTime" column="api_create_time"/>
+        </association>
+        <collection property="organizationList" ofType="org.nmgns.bps.system.entity.Organization" resultMap="organizationResultMap" />
+    </resultMap>
+
+    <!-- 获取用户关联的api列表 -->
+    <select id="getRoleApiPermissionsByUserId" resultMap="roleApiPermissionResultMap" parameterType="java.lang.Long">
+        SELECT
+            rp.id,
+            rp.data_scope,
+            rp.role_id,
+            rp.create_by,
+            rp.create_time,
+            r.name as role_name,
+            r.en_name as role_en_name,
+            r.role_type as role_role_type,
+            r.is_sys as role_is_sys,
+            r.usable as role_usable,
+            r.create_by as role_create_by,
+            r.create_time as role_create_time,
+            rp.api_id,
+            a.name as api_name,
+            a.uri as api_uri,
+            a.permission as api_permission,
+            a.remarks as api_remarks,
+            a.create_by as api_create_by,
+            a.create_time as api_create_time,
+            rpo.organization_id as org_id,
+            o.code as org_code,
+            o.name as org_name,
+            o.type as org_type
+        from
+            bps_78000.t_sys_role_permission rp join bps_78000.t_sys_api a on rp.api_id = a.id join bps_78000.t_sys_role r on rp.role_id = r.id left join bps_78000.t_sys_role_permission_organization rpo on rp.id = rpo.role_permission_id left join public.t_sys_organization o on rpo.organization_id = o.id
+        where rp.role_id in (select role_id from bps_78000.t_sys_user_role where user_id = #{userId})
+    </select>
+
+    <!-- 获取一个apiId关联的全部角色接口映射 -->
+    <select id="getRoleApiPermissionsByApiId" resultMap="roleApiPermissionResultMap" parameterType="java.lang.Long">
+        SELECT
+            rp.id,
+            rp.data_scope,
+            rp.role_id,
+            rp.create_by,
+            rp.create_time,
+            r.name as role_name,
+            r.en_name as role_en_name,
+            r.role_type as role_role_type,
+            r.is_sys as role_is_sys,
+            r.usable as role_usable,
+            r.create_by as role_create_by,
+            r.create_time as role_create_time,
+            rp.api_id,
+            a.name as api_name,
+            a.uri as api_uri,
+            a.permission as api_permission,
+            a.remarks as api_remarks,
+            a.create_by as api_create_by,
+            a.create_time as api_create_time,
+            rpo.organization_id as org_id,
+            o.code as org_code,
+            o.name as org_name,
+            o.type as org_type
+        from
+            bps_78000.t_sys_role_permission rp join bps_78000.t_sys_api a on rp.api_id = a.id join bps_78000.t_sys_role r on rp.role_id = r.id left join bps_78000.t_sys_role_permission_organization rpo on rp.id = rpo.role_permission_id left join public.t_sys_organization o on rpo.organization_id = o.id
+        where rp.api_id = #{apiId})
+    </select>
+
+    <select id="getRoleListByUserId" resultType="org.nmgns.bps.system.entity.Role" parameterType="java.lang.Long">
+        select r.* from bps_78000.t_sys_user_role ur left join bps_78000.t_sys_role r on ur.role_id = r.id where ur.user_id = #{userId}
+    </select>
+
+    <delete id="deleteUserRole" parameterType="org.nmgns.bps.system.entity.UserRole">
+        delete from bps_78000.t_sys_user_role where user_id = #{userId} and role_id = #{roleId}
+    </delete>
+
+    <delete id="deleteUserRoleByUserId" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_user_role where user_id = #{userId}
+    </delete>
+
+    <insert id="insertUserRole" parameterType="org.nmgns.bps.system.entity.UserRole">
+        INSERT INTO bps_78000.t_sys_user_role(user_id, role_id) VALUES (#{userId}, #{roleId});
+    </insert>
+
+    <select id="getRoleById" parameterType="java.lang.Long">
+        select * from bps_78000.t_sys_role where id = #{id} and del_flag = false
+    </select>
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Role" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO bps_78000.t_sys_role(name, en_name, role_type, is_sys, usable, remarks, create_by, create_time, del_flag)
+        VALUES (
+                #{name},
+                #{enName},
+                #{roleType},
+                #{isSys},
+                #{userable},
+                #{createBy},
+                #{createTime},
+                #{delFlag}
+               )
+    </insert>
+
+    <update id="update" parameterType="org.nmgns.bps.system.entity.Role">
+        UPDATE bps_78000.t_sys_role
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="enName != null and enName != ''">en_name = #{enName},</if>
+            <if test="roleType != null and roleType != ''">role_type = #{roleType},</if>
+            <if test="isSys != null and isSys != ''">is_sys = #{isSys},</if>
+            <if test="usable != null ">usable = #{usable},</if>
+            <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_role where id = #{id}
+    </delete>
+
+    <select id="getUserListCountByRoleId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        select count(distinct user_id) from bps_78000.t_sys_user_role where role_id = #{roleId}
+    </select>
+
+    <select id="getDataScopeList" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from public.t_sys_dictionary where code like 'DATA_SCOPE_%' ORDER BY sort
+    </select>
+
+    <select id="getCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.Role">
+        select count(*)
+        from
+            bps_78000.t_sys_role r
+    </select>
+
+    <select id="get" resultType="org.nmgns.bps.system.entity.Role" parameterType="org.nmgns.bps.system.entity.Role">
+        select
+            id,
+            name ,
+            en_name ,
+            role_type ,
+            is_sys ,
+            usable ,
+            remarks,
+            create_by ,
+            create_time ,
+            update_by,
+            update_time,
+            del_flag
+        from
+            bps_78000.t_sys_role r
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY r.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+    
+    <insert id="insertRoleApi" parameterType="org.nmgns.bps.system.entity.RoleApi" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by)
+        VALUES (
+                #{roleId},
+                #{apiId},
+                #{dataScope},
+                #{createTime},
+                #{createBy}
+               )
+    </insert>
+
+    <update id="updateRoleApi" parameterType="org.nmgns.bps.system.entity.RoleApi">
+        UPDATE bps_78000.t_sys_role_permission
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="dataScope != null and dataScope != ''">data_scope = #{dataScope},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteRoleApi" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_role_permission where id = #{id}
+    </delete>
+
+    <select id="getRoleApiListCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.RoleApi">
+        select count(*)
+        from
+        bps_78000.t_sys_role_permission rp
+        join bps_78000.t_sys_role r on rp.role_id = r.id and r.del_flag = false
+        join bps_78000.t_sys_api a on rp.api_id = a.id
+    </select>
+
+    <!-- 分页获取全部的roleApi列表 -->
+    <select id="getRoleApiList" resultMap="roleApiPermissionResultMap" parameterType="org.nmgns.bps.system.entity.RoleApi">
+        select
+            rp.id,
+            rp.data_scope,
+            rp.role_id,
+            rp.create_time,
+            rp.create_by,
+            r.name as role_name,
+            r.en_name as role_en_name,
+            r.role_type as role_role_type,
+            r.is_sys as role_is_sys,
+            r.usable as role_usable,
+            r.create_by as role_create_by,
+            r.create_time as role_create_time,
+            rp.api_id,
+            a.name as api_name,
+            a.uri as api_uri,
+            a.permission as api_permission,
+            a.remarks as api_remarks,
+            a.create_by as api_create_by,
+            a.create_time as api_create_time,
+            rpo.organization_id as org_id,
+            o.code as org_code,
+            o.name as org_name,
+            o.type as org_type
+        from
+        bps_78000.t_sys_role_permission rp
+        join bps_78000.t_sys_role r on rp.role_id = r.id and r.del_flag = false
+        join bps_78000.t_sys_api a on rp.api_id = a.id
+        left join bps_78000.t_sys_role_permission_organization rpo on rp.id = rpo.role_permission_id
+        LEFT JOIN public.t_sys_organization o on rpo.organization_id = o.id
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY rp.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+    
+    <insert id="insertRoleApiOrganization" parameterType="org.nmgns.bps.system.entity.RoleApi">
+        INSERT INTO bps_78000.t_sys_role_permission_organization(role_permission_id, organization_id)
+        VALUES
+        <foreach collection="organizationList" item="organization" separator=",">
+            (#{id}, #{organization.id})
+        </foreach>
+    </insert>
+
+    <delete id="deleteRoleApiOrganizationByRoleApiId" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_role_permission_organization where role_permission_id = #{rolePermissionId}
+    </delete>
+
+    <select id="getTenRoles" resultType="org.nmgns.bps.system.entity.Role" parameterType="org.nmgns.bps.system.entity.Role">
+        select
+            id,
+            name ,
+            en_name ,
+            role_type ,
+            is_sys ,
+            usable ,
+            remarks,
+            create_by ,
+            create_time ,
+            update_by,
+            update_time,
+            del_flag
+        from
+            bps_78000.t_sys_role r
+        <where>
+            <if test="name != null and name != ''" >
+                r.name like '%'||#{name}||'%'
+            </if>
+        </where>
+        ORDER BY r.id LIMIT 10
+    </select>
+
+</mapper>

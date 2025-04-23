@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.system.dao.OrganizationDao">
+    <select id="getOrganizationByCode" resultType="org.nmgns.bps.system.entity.Organization" parameterType="java.lang.String">
+        SELECT a.* FROM public.t_sys_organization a where a.code = #{code}
+    </select>
+
+    <select id="getOrganizationById" resultType="org.nmgns.bps.system.entity.Organization" parameterType="java.lang.Long">
+        SELECT a.* FROM public.t_sys_organization a where a.id = #{id}
+    </select>
+
+    <update id="update" parameterType="org.nmgns.bps.system.entity.Organization">
+        UPDATE public.t_sys_organization
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="icon != null and icon != ''">icon = #{icon},</if>
+            <if test="areaId != null ">area_id = #{areaId},</if>
+            <if test="type != null">
+                <![CDATA[
+                    type = #{type},
+                ]]>
+            </if>
+            <if test="grade != null and grade != ''">grade = #{grade},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="representative != null and representative != ''">representative = #{representative},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="usable != null">usable = #{usable},</if>
+            <if test="primaryUserId != null">primary_user_id = #{primaryUserId},</if>
+            <if test="deputyUserId != null">deputy_user_id = #{deputyUserId},</if>
+            <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Organization" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO public.t_sys_organization(parent_id, parent_ids, code, name, sort, icon, area_id, type, grade, address, representative, phone, usable, primary_user_id, deputy_user_id, remarks, create_by, create_time, update_by, update_time, del_flag)
+        VALUES (
+                #{parentId},
+                #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+                #{code},
+                #{name},
+                #{sort},
+                #{icon},
+                #{areaId},
+                #{type},
+                #{grade},
+                #{address},
+                #{representative},
+                #{phone},
+                #{usable},
+                #{primaryUserId},
+                #{deputyUserId},
+                #{remarks},
+                #{createBy},
+                #{createTime},
+                #{updateBy},
+                #{updateTime},
+                #{delFlag}
+               )
+    </insert>
+
+
+    <select id="getCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.Organization">
+        select count(*)
+        from
+            public.t_sys_organization a left join public.t_sys_organization p on a.parent_id = p.id
+        <where>
+            a.del_flag = false
+            <if test="id != null" >
+                AND (a.id = #{id} OR ( a.parent_ids @> CAST(ARRAY[#{id}] AS INTEGER[])) )
+            </if>
+            <if test="code != null and code != ''">
+                AND a.code = #{code}
+            </if>
+            <if test="name != null and name != ''">
+                AND a.name like '%'||#{name}||'%'
+            </if>
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <select id="get" resultType="org.nmgns.bps.system.entity.Organization" parameterType="org.nmgns.bps.system.entity.Organization">
+        select a.*,p.name as parent_name
+        from
+            public.t_sys_organization a left join public.t_sys_organization p on a.parent_id = p.id
+        <where>
+            a.del_flag = false
+            <if test="id != null" >
+                AND (a.id = #{id} OR ( a.parent_ids @> CAST(ARRAY[#{id}] AS INTEGER[]) ) )
+            </if>
+            <if test="code != null and code != ''">
+                AND a.code = #{code}
+            </if>
+            <if test="name != null and name != ''">
+                AND a.name like '%'||#{name}||'%'
+            </if>
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY a.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <update id="delete" parameterType="java.lang.Long">
+        UPDATE public.t_sys_organization set del_flag = TRUE where id = #{id}
+    </update>
+
+    <select id="getOrgAndLowerLevelOrgListById" resultType="org.nmgns.bps.system.entity.Organization" parameterType="java.lang.Long">
+        select * from public.t_sys_organization where del_flag = false and (id = #{organizationId} or parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])  )
+    </select>
+
+    <select id="getUpperLevelOrgListById" resultType="org.nmgns.bps.system.entity.Organization" parameterType="java.lang.Long">
+        select * from public.t_sys_organization where del_flag = false and id in (select unnest(parent_ids) from public.t_sys_organization where del_flag = false and id = #{organizationId})
+    </select>
+
+
+
+
+
+</mapper>

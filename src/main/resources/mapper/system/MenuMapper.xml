@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.system.dao.MenuDao">
+
+    <select id="getMenuListByUserId" resultType="org.nmgns.bps.system.entity.Menu" parameterType="java.lang.Long">
+        select
+            *
+        from bps_78000.t_sys_menu
+        where
+            id in (select
+                       menu_id
+                   from
+                       bps_78000.t_sys_role_menu
+                   where role_id in (select role_id from bps_78000.t_sys_user_role where user_id = #{userId}) and t_sys_role_menu.is_show = true
+                   group by menu_id
+                   )
+            and del_flag = false
+    </select>
+
+    <select id="getAllMenuList" resultType="org.nmgns.bps.system.entity.Menu" >
+        select
+            *
+        from bps_78000.t_sys_menu
+        where del_flag = false
+    </select>
+
+    <select id="getMenuById" resultType="org.nmgns.bps.system.entity.Menu" >
+        select
+            *
+        from bps_78000.t_sys_menu
+        where del_flag = false and id = #{id}
+    </select>
+
+    <select id="getMenuByUri" resultType="org.nmgns.bps.system.entity.Menu">
+        SELECT
+            *
+        FROM bps_78000.t_sys_menu
+        WHERE del_flag = false and uri = #{uri}
+    </select>
+
+
+    <select id="getCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.Menu">
+        select count(*)
+        from
+        bps_78000.t_sys_menu a left join bps_78000.t_sys_menu p on a.parent_id = p.id
+        <where>
+            a.del_flag = false
+            <if test="id != null" >
+                AND (a.id = #{id}  )
+            </if>
+        </where>
+    </select>
+
+    <select id="get" resultType="org.nmgns.bps.system.entity.Menu" parameterType="org.nmgns.bps.system.entity.Menu">
+        select a.*, p.name as parent_name
+        from
+        bps_78000.t_sys_menu a left join bps_78000.t_sys_menu p on a.parent_id = p.id
+        <where>
+            a.del_flag = false
+            <if test="id != null" >
+                AND (a.id = #{id}  )
+            </if>
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY a.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <update id="update" parameterType="org.nmgns.bps.system.entity.Menu">
+        UPDATE bps_78000.t_sys_menu
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="enName != null and enName != ''">en_name = #{enName},</if>
+            <if test="sort != null ">sort = #{sort},</if>
+            <if test="type != null">
+                <![CDATA[
+                    type = #{type},
+                ]]>
+            </if>
+            <if test="uri != null and uri != ''">uri = #{uri},</if>
+            <if test="locale != null and locale != ''">
+                <![CDATA[
+                    locale = #{locale},
+                ]]>
+            </if>
+            <if test="target != null and target != ''">target = #{target},</if>
+            <if test="icon != null and icon != ''">icon = #{icon},</if>
+            <if test="isShow != null and isShow != ''">is_show = #{isShow},</if>
+            <if test="permission != null and permission != ''">permission = #{permission},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Menu" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO bps_78000.t_sys_menu(parent_id, parent_ids, name, en_name, sort, type, uri, locale, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag)
+        VALUES (
+                   #{parentId},
+                   #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+                   #{name},
+                   #{enName},
+                   #{sort},
+                   #{type},
+                   #{uri},
+                   #{locale},
+                   #{target},
+                   #{icon},
+                   #{isShow},
+                   #{permission},
+                   #{description},
+                   #{remarks},
+                   #{createBy},
+                   #{createTime},
+                   #{updateBy},
+                   #{updateTime},
+                   #{delFlag}
+               )
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE from bps_78000.t_sys_menu where id = #{id}
+    </delete>
+
+    <select id="getLowerLevelMenuById" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.Menu">
+        select * from bps_78000.t_sys_menu where del_flag = false and parent_ids @> CAST(ARRAY[#{menuId}] AS BIGINT[])
+    </select>
+
+</mapper>

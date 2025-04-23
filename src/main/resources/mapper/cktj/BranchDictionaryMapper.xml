@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.nmgns.bps.cktj.dao.BranchDictionaryDao">
+
+    <insert id="insert" parameterType="org.nmgns.bps.system.entity.Dictionary">
+        INSERT INTO bps_78000.t_branch_dictionary(code, name, sort) VALUES (#{code}, #{name}, #{sort})
+    </insert>
+
+    <select id="getByCode" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from bps_78000.t_branch_dictionary where code = #{code}
+    </select>
+
+    <select id="getListByPrefixCode" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from bps_78000.t_branch_dictionary where code like #{code}||'%' order by sort
+    </select>
+
+    <select id="getListBySuffixCode" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from bps_78000.t_branch_dictionary where code like '%'||#{code} order by sort
+    </select>
+
+    <select id="getListByPrefixAndSuffixCode" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from bps_78000.t_branch_dictionary where code like '%'||#{code}||'%' order by sort
+    </select>
+
+</mapper>
