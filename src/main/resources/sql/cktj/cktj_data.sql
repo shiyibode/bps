@@ -161,11 +161,15 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(105,'撤销登记揽储人申请','/cktj/employeeaccount/undoregisteremployee','cktj:employeeaccount:undoregisteremployee','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(106,'获取任务数可变更揽储人列表','/cktj/employeeaccount/gettaskmodifiableaccount','cktj:employeeaccount:gettaskmodifiableaccount','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(107,'获取计酬数可变更揽储人列表','/cktj/employeeaccount/getpaymentmodifiableaccount','cktj:employeeaccount:getpaymentmodifiableaccount','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取已便跟揽储人但未复核列表','/cktj/employeeaccount/getmodifieduncheckedaccount','cktj:employeeaccount:getmodifieduncheckedaccount','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(108,'变更揽储人申请-任务','/cktj/employeeaccount/modifyemployeetask','cktj:employeeaccount:modifyemployeetask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(109,'变更揽储人申请-计酬','/cktj/employeeaccount/modifyemployeepayment','cktj:employeeaccount:modifyemployeepayment','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(110,'复核变更揽储人申请-任务数','/cktj/employeeaccount/checkmodifyemployeetask','cktj:employeeaccount:checkmodifyemployeetask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(111,'复核变更揽储人申请-计酬数','/cktj/employeeaccount/checkmodifyemployeepayment','cktj:employeeaccount:checkmodifyemployeepayment','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(112,'获取已便跟揽储人但未复核列表-任务数','/cktj/employeeaccount/getmodifieduncheckedaccounttask','cktj:employeeaccount:getmodifieduncheckedaccounttask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(113,'获取已便跟揽储人但未复核列表-计酬数','/cktj/employeeaccount/getmodifieduncheckedaccountpayment','cktj:employeeaccount:getmodifieduncheckedaccountpayment','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(114,'撤销变更揽储人申请-任务数','/cktj/employeeaccount/undomodifyemployeetask','cktj:employeeaccount:undomodifyemployeetask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(115,'撤销变更揽储人申请-计酬数','/cktj/employeeaccount/undomodifyemployeepayment','cktj:employeeaccount:undomodifyemployeepayment','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取揽储人存款账户信息','/cktj/employeeaccount/get','cktj:employeeaccount:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('变更揽储人申请','/cktj/employeeaccount/modifyemployee','cktj:employeeaccount:modifyemployee','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('复核变更揽储人申请','/cktj/employeeaccount/checkmodifyemployee','cktj:employeeaccount:checkmodifyemployee','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('撤销变更揽储人申请','/cktj/employeeaccount/undomodifyemployee','cktj:employeeaccount:undomodifyemployee','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取存款分类列表','/cktj/employeeaccount/depositsort','cktj:employeeaccount:depositsort','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('员工时点存款','/cktj/deposit/employee','cktj:deposit:employee','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('员工时点存款导出','/cktj/deposit/exportempdeposit','cktj:deposit:exportempdeposit','手工写入权限',1,now(),1,now());
@@ -187,6 +191,14 @@ insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 105, 'DATA_SCOPE_ALL', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 106, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 107, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 108, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 109, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 110, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 111, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 112, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 113, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 114, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 115, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 
 
 

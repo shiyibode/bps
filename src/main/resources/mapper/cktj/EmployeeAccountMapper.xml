@@ -428,8 +428,35 @@
         </if>
     </select>
 
+    <resultMap id="tellerTaskPercentageMap" type="org.nmgns.bps.cktj.entity.TellerPercentage">
+        <id property="id" column="id" />
+        <result property="accountNo" column="account_no" />
+        <result property="childAccountNo" column="child_account_no" />
+        <result property="tellerCode" column="teller_code" />
+        <result property="percentage" column="percentage" />
+        <result property="mainTeller" column="main_teller" />
+        <result property="startDate" column="start_date" />
+        <result property="endDate" column="end_date" />
+        <result property="validFlag" column="valid_flag" />
+        <result property="registerType" column="register_type" />
+        <result property="registerCheckStatus" column="register_check_status" />
+        <result property="alterCheckStatus" column="alter_check_status" />
+        <result property="opTellerCode" column="op_teller_code" />
+        <result property="registerCheckTellerCode" column="register_check_teller_code" />
+        <result property="alterCheckTellerCode" column="alter_check_teller_code" />
+        <result property="registerCheckTime" column="register_check_time" />
+        <result property="alterCheckTime" column="alter_check_time" />
+        <result property="parentIds" column="parent_ids" typeHandler="org.nmgns.bps.system.utils.PgArrayToLongListTypeHandler"/>
+        <result property="remarks" column="remarks" />
+        <result property="createTime" column="create_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="tellerName" column="teller_name" />
+    </resultMap>
+    
     <!-- 获取员工任务分成信息，参数为账号、子账号 -->
-    <select id="getTellerTaskPercentageListByAccountNoAndChildAccountNo" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="org.nmgns.bps.cktj.entity.TellerPercentage">
+    <select id="getTellerTaskPercentageListByAccountNoAndChildAccountNo" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultMap="tellerTaskPercentageMap">
         select
             ea.id,
             ea.account_no,
@@ -475,7 +502,7 @@
     </select>
 
     <!-- 获取员工计酬分成信息，参数为账号、子账号 -->
-    <select id="getTellerPaymentPercentageListByAccountNoAndChildAccountNo" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="org.nmgns.bps.cktj.entity.TellerPercentage">
+    <select id="getTellerPaymentPercentageListByAccountNoAndChildAccountNo" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultMap="tellerTaskPercentageMap">
         select
             ea.id,
             ea.account_no,
@@ -525,7 +552,7 @@
         UPDATE bps_78000.t_cktj_employee_account_task
         <trim prefix="SET" suffixOverrides=",">
             <if test="mainTeller != null">main_teller = #{mainTeller},</if>
-            <if test="endDate != null ">end_date = #{endDate},</if>
+                end_date = #{endDate},
             <if test="validFlag != null ">valid_flag = #{validFlag},</if>
             <if test="registerCheckStatus != null and registerCheckStatus != ''">register_check_status = #{registerCheckStatus},</if>
             <if test="alterCheckStatus != null and alterCheckStatus != ''">alter_check_status = #{alterCheckStatus},</if>
@@ -546,7 +573,7 @@
         UPDATE bps_78000.t_cktj_employee_account_payment
         <trim prefix="SET" suffixOverrides=",">
             <if test="mainTeller != null">main_teller = #{mainTeller},</if>
-            <if test="endDate != null ">end_date = #{endDate},</if>
+            end_date = #{endDate},
             <if test="validFlag != null ">valid_flag = #{validFlag},</if>
             <if test="registerCheckStatus != null and registerCheckStatus != ''">register_check_status = #{registerCheckStatus},</if>
             <if test="alterCheckStatus != null and alterCheckStatus != ''">alter_check_status = #{alterCheckStatus},</if>
@@ -703,293 +730,44 @@
         GROUP BY ea.org_code, ea.account_no, ea.child_account_no, ea.subject_no, ea.card_no, ea.account_type, ea.account_open_date, ea.customer_no, ea.customer_name, ea.customer_type, ea.identity_no, ea.identity_type, ea.start_date, dpfm01.close_acct_flag
     </select>
 
-    <!-- 获取当前生效的任务分成列表 -->
-    <select id="findTaskValidTellerPercentageCount" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="java.lang.Long">
+    <!-- 在payment分成表中，通过账号、子账号获取账号的基础信息 ，用于拒绝审核时，恢复未绑定列表的内容-->
+    <select id="getEmployeeAccountByAccountNoAndChildAccountNoFromPayment" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="org.nmgns.bps.cktj.entity.EmployeeAccount">
         SELECT
-            count(*)
+        ea.org_code,
+        ea.account_no,
+        ea.child_account_no,
+        ea.subject_no,
+        ea.card_no,
+        ea.account_type,
+        ea.account_open_date,
+        ea.customer_no,
+        ea.customer_name,
+        ea.customer_type,
+        ea.identity_no,
+        ea.identity_type,
+        ea.start_date,
+        dpfm01.close_acct_flag
         FROM
-            bps_78000.t_cktj_employee_account_task ea
-            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on ea.account_no = dpfm01.account_no
-            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
-            LEFT JOIN public.t_sys_user u on u.code = ea.teller_code
+        bps_78000.t_cktj_employee_account_payment ea
+        LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on dpfm01.account_no = ea.account_no
         <where>
-            ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
-            <if test="organizationId != null" >
-                AND o.id = #{organizationId}
+            <if test="registerCheckStatus != null and registerCheckStatus != ''">
+                and ea.register_check_status = #{registerCheckStatus}
             </if>
-            <!-- 搜索条件 -->
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                and ea.alter_check_status = #{alterCheckStatus}
+            </if>
             <if test="accountNo != null and accountNo != ''">
-                AND ea.account_no = #{accountNo}
+                and ea.account_no = #{accountNo}
             </if>
             <if test="childAccountNo != null and childAccountNo != ''">
-                AND ea.child_account_no = #{childAccountNo}
+                and ea.child_account_no = #{childAccountNo}
             </if>
-            <if test="tellerCode != null and tellerCode != ''">
-                AND ea.teller_code = #{tellerCode}
+            <if test="validFlag != null ">
+                and ea.valid_flag = #{validFlag}
             </if>
-            <if test="tellerName != null and tellerName != ''">
-                AND u.name = #{tellerName}
-            </if>
-            <if test="cardNo != null and cardNo != ''">
-                AND ea.card_no = #{cardNo}
-            </if>
-            <if test="customerName != null and customerName != ''">
-                AND ea.customer_name LIKE '%'||#{customerName}||'%'
-            </if>
-            <if test="identityNo != null and identityNo != ''">
-                AND ea.identity_no = #{identityNo}
-            </if>
-            <if test="customerType != null and customerType != ''">
-                AND ea.customer_type = #{customerType}
-            </if>
-            <if test="accountOpenDate != null">
-                AND account_open_date = #{accountOpenDate}
-            </if>
-            <if test="createTime != null">
-                AND to_date(ea.create_time::TEXT, 'yyyy-mm-dd') = #{createTime}
-            </if>
-            <!-- 数据范围过滤 -->
-            ${sqlMap.dsf}
         </where>
-    </select>
-
-    <!-- 获取当前生效的任务分成列表 -->
-    <select id="findTaskValidTellerPercentage" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="org.nmgns.bps.cktj.entity.TellerPercentage">
-        SELECT
-            ea.id,
-            ea.teller_code,
-            ea.org_code,
-            ea.account_no,
-            ea.child_account_no,
-            ea.subject_no,
-            ea.percentage,
-            ea.card_no,
-            ea.account_type,
-            ea.account_open_date,
-            ea.customer_no,
-            ea.customer_name,
-            ea.customer_type,
-            ea.identity_no,
-            ea.identity_type,
-            ea.start_date,
-            ea.end_date,
-            ea.valid_flag,
-            ea.register_type,
-            ea.register_check_status,
-            ea.alter_check_status,
-            ea.op_teller_code,
-            ea.register_check_teller_code,
-            ea.alter_check_teller_code,
-            ea.register_check_time,
-            ea.alter_check_time,
-            ea.parent_ids,
-            ea.remarks,
-            ea.create_time,
-            ea.create_by ,
-            ea.update_time,
-            ea.update_by,
-            dpfm01.close_acct_flag,
-            u.name as teller_name
-        FROM
-            bps_78000.t_cktj_employee_account_task ea
-            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on ea.account_no = dpfm01.account_no
-            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
-            LEFT JOIN public.t_sys_user u on u.code = ea.teller_code
-        <where>
-            ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
-            <if test="organizationId != null" >
-                AND o.id = #{organizationId}
-            </if>
-            <!-- 搜索条件 -->
-            <if test="accountNo != null and accountNo != ''">
-                AND ea.account_no = #{accountNo}
-            </if>
-            <if test="childAccountNo != null and childAccountNo != ''">
-                AND ea.child_account_no = #{childAccountNo}
-            </if>
-            <if test="tellerCode != null and tellerCode != ''">
-                AND ea.teller_code = #{tellerCode}
-            </if>
-            <if test="tellerName != null and tellerName != ''">
-                AND u.name = #{tellerName}
-            </if>
-            <if test="cardNo != null and cardNo != ''">
-                AND ea.card_no = #{cardNo}
-            </if>
-            <if test="customerName != null and customerName != ''">
-                AND ea.customer_name LIKE '%'||#{customerName}||'%'
-            </if>
-            <if test="identityNo != null and identityNo != ''">
-                AND ea.identity_no = #{identityNo}
-            </if>
-            <if test="customerType != null and customerType != ''">
-                AND ea.customer_type = #{customerType}
-            </if>
-            <if test="accountOpenDate != null">
-                AND account_open_date = #{accountOpenDate}
-            </if>
-            <if test="createTime != null">
-                AND to_date(ea.create_time::TEXT, 'yyyy-mm-dd') = #{createTime}
-            </if>
-            <!-- 数据范围过滤 -->
-            ${sqlMap.dsf}
-        </where>
-        <choose>
-            <when test="page !=null ">
-                ORDER BY ea.id DESC
-            </when>
-            <otherwise>
-                ORDER BY ea.id DESC
-            </otherwise>
-        </choose>
-        <if test="page != null and page.start >= 0 and page.pageSize > 0">
-            offset ${page.start} limit ${page.pageSize}
-        </if>
-    </select>
-
-
-    <!-- 获取当前生效的计酬分成列表 -->
-    <select id="findValidPaymentTellerPercentageCount" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="java.lang.Long">
-        SELECT
-            count(*)
-        FROM
-            bps_78000.t_cktj_employee_account_payment ea
-            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on ea.account_no = dpfm01.account_no
-            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
-            LEFT JOIN public.t_sys_user u on u.code = ea.teller_code
-        <where>
-            ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
-            <if test="organizationId != null" >
-                AND o.id = #{organizationId}
-            </if>
-            <!-- 搜索条件 -->
-            <if test="accountNo != null and accountNo != ''">
-                AND ea.account_no = #{accountNo}
-            </if>
-            <if test="childAccountNo != null and childAccountNo != ''">
-                AND ea.child_account_no = #{childAccountNo}
-            </if>
-            <if test="tellerCode != null and tellerCode != ''">
-                AND ea.teller_code = #{tellerCode}
-            </if>
-            <if test="tellerName != null and tellerName != ''">
-                AND u.name = #{tellerName}
-            </if>
-            <if test="cardNo != null and cardNo != ''">
-                AND ea.card_no = #{cardNo}
-            </if>
-            <if test="customerName != null and customerName != ''">
-                AND ea.customer_name LIKE '%'||#{customerName}||'%'
-            </if>
-            <if test="identityNo != null and identityNo != ''">
-                AND ea.identity_no = #{identityNo}
-            </if>
-            <if test="customerType != null and customerType != ''">
-                AND ea.customer_type = #{customerType}
-            </if>
-            <if test="accountOpenDate != null">
-                AND account_open_date = #{accountOpenDate}
-            </if>
-            <if test="createTime != null">
-                AND to_date(ea.create_time::TEXT, 'yyyy-mm-dd') = #{createTime}
-            </if>
-            <!-- 数据范围过滤 -->
-            ${sqlMap.dsf}
-        </where>
-    </select>
-
-    <!-- 获取当前生效的计酬分成列表 -->
-    <select id="findValidPaymentTellerPercentage" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="org.nmgns.bps.cktj.entity.TellerPercentage">
-        SELECT
-            ea.id,
-            ea.teller_code,
-            ea.org_code,
-            ea.account_no,
-            ea.child_account_no,
-            ea.subject_no,
-            ea.percentage,
-            ea.card_no,
-            ea.account_type,
-            ea.account_open_date,
-            ea.customer_no,
-            ea.customer_name,
-            ea.customer_type,
-            ea.identity_no,
-            ea.identity_type,
-            ea.start_date,
-            ea.end_date,
-            ea.valid_flag,
-            ea.register_type,
-            ea.register_check_status,
-            ea.alter_check_status,
-            ea.op_teller_code,
-            ea.register_check_teller_code,
-            ea.alter_check_teller_code,
-            ea.register_check_time,
-            ea.alter_check_time,
-            ea.parent_ids,
-            ea.remarks,
-            ea.create_time,
-            ea.create_by ,
-            ea.update_time,
-            ea.update_by,
-            dpfm01.close_acct_flag,
-            u.name as teller_name
-        FROM
-            bps_78000.t_cktj_employee_account_payment ea
-            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on ea.account_no = dpfm01.account_no
-            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
-            LEFT JOIN public.t_sys_user u on u.code = ea.teller_code
-        <where>
-            ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
-            <if test="organizationId != null" >
-                AND o.id = #{organizationId}
-            </if>
-            <!-- 搜索条件 -->
-            <if test="accountNo != null and accountNo != ''">
-                AND ea.account_no = #{accountNo}
-            </if>
-            <if test="childAccountNo != null and childAccountNo != ''">
-                AND ea.child_account_no = #{childAccountNo}
-            </if>
-            <if test="tellerCode != null and tellerCode != ''">
-                AND ea.teller_code = #{tellerCode}
-            </if>
-            <if test="tellerName != null and tellerName != ''">
-                AND u.name = #{tellerName}
-            </if>
-            <if test="cardNo != null and cardNo != ''">
-                AND ea.card_no = #{cardNo}
-            </if>
-            <if test="customerName != null and customerName != ''">
-                AND ea.customer_name LIKE '%'||#{customerName}||'%'
-            </if>
-            <if test="identityNo != null and identityNo != ''">
-                AND ea.identity_no = #{identityNo}
-            </if>
-            <if test="customerType != null and customerType != ''">
-                AND ea.customer_type = #{customerType}
-            </if>
-            <if test="accountOpenDate != null">
-                AND account_open_date = #{accountOpenDate}
-            </if>
-            <if test="createTime != null">
-                AND to_date(ea.create_time::TEXT, 'yyyy-mm-dd') = #{createTime}
-            </if>
-            <!-- 数据范围过滤 -->
-            ${sqlMap.dsf}
-        </where>
-        <choose>
-            <when test="page !=null ">
-                ORDER BY ea.id DESC
-            </when>
-            <otherwise>
-                ORDER BY ea.id DESC
-            </otherwise>
-        </choose>
-        <if test="page != null and page.start >= 0 and page.pageSize > 0">
-            offset ${page.start} limit ${page.pageSize}
-        </if>
+        GROUP BY ea.org_code, ea.account_no, ea.child_account_no, ea.subject_no, ea.card_no, ea.account_type, ea.account_open_date, ea.customer_no, ea.customer_name, ea.customer_type, ea.identity_no, ea.identity_type, ea.start_date, dpfm01.close_acct_flag
     </select>
 
     <!-- 获取任务数可变更的账户信息列表 -->
@@ -1232,6 +1010,242 @@
         </if>
     </select>
 
+    <!-- 获取已变更揽储人但未复核的账户总数（通过任务分成表加工得到） -->
+    <select id="findModifiedUncheckedAccountTaskCount" resultType="java.lang.Long">
+        select count(*)
+        from (
+                SELECT
+                    ea.org_code,
+                    ea.account_no,
+                    ea.child_account_no,
+                    ea.card_no,
+                    ea.account_type,
+                    ea.account_open_date,
+                    ea.customer_no,
+                    ea.customer_name,
+                    ea.customer_type,
+                    ea.identity_no,
+                    ea.identity_type,
+                    dpfm01.close_acct_flag
+                FROM
+                    bps_78000.t_cktj_employee_account_task ea
+                    LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on dpfm01.account_no = ea.account_no
+                    LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
+                <where>
+                    ea.valid_flag = false and ea.alter_check_status = 'CHECKED_STATUS_UNCHECKED'
+                    <if test="organizationId != null" >
+                        AND o.id = #{organizationId}
+                    </if>
+                    <if test="orgCode != null and orgCode != ''">
+                        AND ea.org_code = #{orgCode}
+                    </if>
+                    <!-- 搜索条件 -->
+                    <if test="accountNo != null and accountNo != ''">
+                        AND ea.account_no = #{accountNo}
+                    </if>
+                    <if test="cardNo != null and cardNo != ''">
+                        AND ea.card_no LIKE '%'||#{cardNo}||'%'
+                    </if>
+                    <if test="customerName != null and customerName != ''">
+                        AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+                    </if>
+                    <if test="identityNo != null and identityNo != ''">
+                        AND ea.identity_no = #{identityNo}
+                    </if>
+                    <if test="customerType != null and customerType != ''">
+                        AND ea.customer_type = #{customerType}
+                    </if>
+                    <if test="accountOpenDate != null">
+                        AND ea.account_open_date = #{accountOpenDate}
+                    </if>
+                    <!-- 数据范围过滤 -->
+                    ${sqlMap.dsf}
+                </where>
+                GROUP BY ea.org_code,ea.account_no,ea.child_account_no,ea.card_no,ea.account_type,ea.account_open_date,ea.customer_no,ea.customer_name,ea.customer_type,ea.identity_no,ea.identity_type,dpfm01.close_acct_flag
+             ) t
 
+    </select>
+
+    <!-- 获取已变更揽储人但未复核的账户列表（通过任务分成表加工得到） -->
+    <select id="findModifiedUncheckedAccountTask" resultType="org.nmgns.bps.cktj.entity.EmployeeAccount">
+        SELECT
+            ea.org_code,
+            ea.account_no,
+            ea.child_account_no,
+            ea.card_no,
+            ea.account_type,
+            ea.account_open_date,
+            ea.customer_no,
+            ea.customer_name,
+            ea.customer_type,
+            ea.identity_no,
+            ea.identity_type,
+            dpfm01.close_acct_flag
+        FROM
+            bps_78000.t_cktj_employee_account_task ea
+            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on dpfm01.account_no = ea.account_no
+            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
+        <where>
+            ea.valid_flag = false and ea.alter_check_status = 'CHECKED_STATUS_UNCHECKED'
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND ea.customer_type = #{customerType}
+            </if>
+            <if test="accountOpenDate != null">
+                AND ea.account_open_date = #{accountOpenDate}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY ea.org_code,ea.account_no,ea.child_account_no,ea.card_no,ea.account_type,ea.account_open_date,ea.customer_no,ea.customer_name,ea.customer_type,ea.identity_no,ea.identity_type,dpfm01.close_acct_flag
+        <choose>
+            <when test="page !=null ">
+                ORDER BY ea.account_no DESC
+            </when>
+            <otherwise>
+                ORDER BY ea.account_no DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 获取已变更揽储人但未复核的账户总数（通过任务分成表加工得到） -->
+    <select id="findModifiedUncheckedAccountPaymentCount" resultType="java.lang.Long">
+        select count(*)
+        from (
+                SELECT
+                    ea.org_code,
+                    ea.account_no,
+                    ea.child_account_no,
+                    ea.card_no,
+                    ea.account_type,
+                    ea.account_open_date,
+                    ea.customer_no,
+                    ea.customer_name,
+                    ea.customer_type,
+                    ea.identity_no,
+                    ea.identity_type,
+                    dpfm01.close_acct_flag
+                FROM
+                    bps_78000.t_cktj_employee_account_payment ea
+                    LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on dpfm01.account_no = ea.account_no
+                    LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
+                <where>
+                    ea.valid_flag = false and ea.alter_check_status = 'CHECKED_STATUS_UNCHECKED'
+                    <if test="organizationId != null" >
+                        AND o.id = #{organizationId}
+                    </if>
+                    <if test="orgCode != null and orgCode != ''">
+                        AND ea.org_code = #{orgCode}
+                    </if>
+                    <!-- 搜索条件 -->
+                    <if test="accountNo != null and accountNo != ''">
+                        AND ea.account_no = #{accountNo}
+                    </if>
+                    <if test="cardNo != null and cardNo != ''">
+                        AND ea.card_no LIKE '%'||#{cardNo}||'%'
+                    </if>
+                    <if test="customerName != null and customerName != ''">
+                        AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+                    </if>
+                    <if test="identityNo != null and identityNo != ''">
+                        AND ea.identity_no = #{identityNo}
+                    </if>
+                    <if test="customerType != null and customerType != ''">
+                        AND ea.customer_type = #{customerType}
+                    </if>
+                    <if test="accountOpenDate != null">
+                        AND ea.account_open_date = #{accountOpenDate}
+                    </if>
+                    <!-- 数据范围过滤 -->
+                    ${sqlMap.dsf}
+                </where>
+                GROUP BY ea.org_code,ea.account_no,ea.child_account_no,ea.card_no,ea.account_type,ea.account_open_date,ea.customer_no,ea.customer_name,ea.customer_type,ea.identity_no,ea.identity_type,dpfm01.close_acct_flag
+        ) t
+
+    </select>
+
+    <!-- 获取已变更揽储人但未复核的账户列表（通过任务分成表加工得到） -->
+    <select id="findModifiedUncheckedAccountPayment" resultType="org.nmgns.bps.cktj.entity.EmployeeAccount">
+        SELECT
+            ea.org_code,
+            ea.account_no,
+            ea.child_account_no,
+            ea.card_no,
+            ea.account_type,
+            ea.account_open_date,
+            ea.customer_no,
+            ea.customer_name,
+            ea.customer_type,
+            ea.identity_no,
+            ea.identity_type,
+            dpfm01.close_acct_flag
+        FROM
+            bps_78000.t_cktj_employee_account_payment ea
+            LEFT JOIN bps_78000.t_ods_hxsj_deposit_account dpfm01 on dpfm01.account_no = ea.account_no
+            LEFT JOIN public.t_sys_organization o ON o.code = ea.org_code
+        <where>
+            ea.valid_flag = false and ea.alter_check_status = 'CHECKED_STATUS_UNCHECKED'
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND ea.customer_type = #{customerType}
+            </if>
+            <if test="accountOpenDate != null">
+                AND ea.account_open_date = #{accountOpenDate}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY ea.org_code,ea.account_no,ea.child_account_no,ea.card_no,ea.account_type,ea.account_open_date,ea.customer_no,ea.customer_name,ea.customer_type,ea.identity_no,ea.identity_type,dpfm01.close_acct_flag
+        <choose>
+            <when test="page !=null ">
+                ORDER BY ea.account_no DESC
+            </when>
+            <otherwise>
+                ORDER BY ea.account_no DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
 
 </mapper>

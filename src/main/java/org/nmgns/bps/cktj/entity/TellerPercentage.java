@@ -5,6 +5,7 @@ import lombok.Data;
 import org.nmgns.bps.system.utils.base.BaseDataScopePageEntity;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class TellerPercentage extends BaseDataScopePageEntity<TellerPercentage> {
@@ -17,7 +18,7 @@ public class TellerPercentage extends BaseDataScopePageEntity<TellerPercentage> 
     private Date endDate;
     private String opTellerCode;
     private Date createTime;
-    private Long[] parentIds;
+    private List<Long> parentIds;
     private String oldTellerCode;
     private String oldTellerName;
     private String registerType;         //登记类型: 0-新开账户登记揽储人; 1-变更揽揽人

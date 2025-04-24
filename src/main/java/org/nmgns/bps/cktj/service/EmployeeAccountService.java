@@ -1,5 +1,6 @@
 package org.nmgns.bps.cktj.service;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import org.nmgns.bps.cktj.dao.EmployeeAccountDao;
 import org.nmgns.bps.cktj.entity.AutoBindRule;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class EmployeeAccountService {
@@ -346,7 +344,6 @@ public class EmployeeAccountService {
             TellerPercentage tp = new TellerPercentage();
             tp.setAccountNo(ea.getAccountNo());
             tp.setChildAccountNo(ea.getChildAccountNo());
-            tp.setRegisterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);   //查找登记已复核的
             tp.setValidFlag(true);
 
             List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tp);
@@ -395,76 +392,392 @@ public class EmployeeAccountService {
 
     /**
      * 任务数变更揽储人
-     * @param tellerPercentage 新揽储人信息
+     * @param employeeAccount 新揽储人信息
      */
     @Transactional
-    public void modifyTaskEmployee(TellerPercentage tellerPercentage) throws RuntimeException {
-//        if (null == tellerPercentage || StrUtil.isBlank(tellerPercentage.getTellerCode()) || ) {
-//            throw new RuntimeException("变更揽储人出错, 请求参数不正确！");
-//        }
-//
-//        EmployeeAccount dbEmployeeAccount = dao.get(employeeAccount.getId());
-//        if (null == dbEmployeeAccount) {
-//            throw new ServiceException("变更揽储人出错, 找不到对应的存款账户信息！");
-//        }
-//
-//        if (!dbEmployeeAccount.getValidFlag()) {
-//            StringBuilder sb = new StringBuilder();
-//            sb.append(dbEmployeeAccount.getTellerCode());
-//            sb.append(" 账号：").append(dbEmployeeAccount.getAccountNo());
-//            sb.append(" 的存款账户信息不可变更揽储人，请刷新数据后重试！");
-//            throw new ServiceException(sb.toString());
-//        }
-//
-//        if (StringUtils.equals(employeeAccount.getTellerCode(), dbEmployeeAccount.getTellerCode())) {
-//            throw new ServiceException("变更揽储人出错, 变更后的揽储人与当前揽储人为同一人，请核对信息后重试！");
-//        }
-//
-//        User user = userOrganizationDao.getUserByUserCode(employeeAccount.getTellerCode());
-//        if (null == user) {
-//            throw new ServiceException("变更揽储人出错, 编号为 [ " + employeeAccount.getTellerCode() + " ] 的员工信息不存在，请输入正确的柜员号！");
-//        }
-//
-//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-//        String dbDate = sdf.format(dbEmployeeAccount.getStartDate());
-//        String currentDate = sdf.format(new Date());
-//        if (dbDate.equals(currentDate)) throw new ServiceException("变更为揽储人出错，当日已变更，不允许再次变更");
-//
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.add(Calendar.DATE,-1);
-//        Date yesterday = calendar.getTime();
-//
-//        //将原揽储人存款账户信息设置为不可变更揽储人
-//        EmployeeAccount tmpEA = new EmployeeAccount();
-//        tmpEA.setId(dbEmployeeAccount.getId());
-//        tmpEA.setEndDate(yesterday);
-//        tmpEA.setValidFlag(false);
-//        tmpEA.preUpdate();
-//        dao.update(tmpEA);
-//
-//        //在柜员揽储账户表中插入新变更揽储人信息
-//        EmployeeAccount ea = new EmployeeAccount();
-//        ea.setTellerCode(user.getCode());
-//        ea.setOrgCode(dbEmployeeAccount.getOrgCode());
-//        ea.setAccountNo(dbEmployeeAccount.getAccountNo());
-//        ea.setCardNo(dbEmployeeAccount.getCardNo());
-//        ea.setAccountType(dbEmployeeAccount.getAccountType());
-//        ea.setAccountOpenDate(dbEmployeeAccount.getAccountOpenDate());
-//        ea.setCustomerNo(dbEmployeeAccount.getCustomerNo());
-//        ea.setCustomerName(dbEmployeeAccount.getCustomerName());
-//        ea.setCustomerType(dbEmployeeAccount.getCustomerType());
-//        ea.setIdentityNo(dbEmployeeAccount.getIdentityNo());
-//        ea.setIdentityType(dbEmployeeAccount.getIdentityType());
-//        ea.setStartDate(new Date());
-//        ea.setValidFlag(false);
-//        ea.setRegisterType(EmployeeAccount.REGISTER_TYPE_REBOUND);    //登记方式：1-变更揽储人登记
-//        ea.setAlterCheckStatus(EmployeeAccount.CHECKED_STATUS_UNCHECKED);
-//        ea.setOpTellerCode(UserUtils.getUser().getCode());
-//        ea.setParentId(dbEmployeeAccount.getId());
-//        ea.setRemarks(employeeAccount.getRemarks());
-//        ea.setCreateTime(new Date());
-//        ea.preInsert();
-//        dao.insert(ea);
+    public void modifyTaskEmployee(EmployeeAccount employeeAccount) throws RuntimeException {
+        if (null == employeeAccount || employeeAccount.getTellerTaskPercentageList() == null || employeeAccount.getTellerTaskPercentageList().isEmpty() || StrUtil.isBlank(employeeAccount.getAccountNo())) {
+            throw new RuntimeException("变更揽储人出错, 请求参数不正确！");
+        }
+
+        // 判断员工编号是否正确、比例之和是否为100%
+        Double sumPercentage = (double)0;
+        for (TellerPercentage tp:employeeAccount.getTellerTaskPercentageList()) {
+            User user = userService.getUserByCode(tp.getTellerCode());
+            if (null == user) {
+                throw new RuntimeException("登记揽储人出错, 编号为 [ " + tp.getTellerCode() + " ] 的员工信息不存在，请输入正确的柜员号！");
+            }
+            if (null == tp.getMainTeller()) throw new RuntimeException("登记揽储人出错，未确定是否主揽储人身份");
+            sumPercentage += tp.getPercentage();
+        }
+        if(sumPercentage != 1) throw new RuntimeException("比例求和不为100%");
+
+        // 获取原始的任务分成比例
+        TellerPercentage tmpTp = new TellerPercentage();
+        tmpTp.setAccountNo(employeeAccount.getAccountNo());
+        tmpTp.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tmpTp.setValidFlag(true);
+        List<TellerPercentage> dbTaskTellerPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tmpTp);
+        EmployeeAccount dbEmployeeAccount = employeeAccountDao.getEmployeeAccountByAccountNoAndChildAccountNoFromTask(tmpTp);
+
+        if (null == dbTaskTellerPercentageList || dbTaskTellerPercentageList.isEmpty() || dbEmployeeAccount == null) {
+            throw new RuntimeException("变更揽储人出错, 找不到对应的存款账户信息！");
+        }
+
+        // 判断当日是否已经发生过变更（当前不允许当日再次变更，后期优化）
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (TellerPercentage tp:dbTaskTellerPercentageList) {
+            String dbDate = sdf.format(tp.getStartDate());
+            String currentDate = sdf.format(new Date());
+            if (dbDate.equals(currentDate)) throw new RuntimeException("变更为揽储人出错，当日已变更，不允许再次变更");
+        }
+
+        //将原揽储人存款账户信息设置为不可变更揽储人
+        Date yesterday = DateUtil.yesterday();
+        List<Long> newParentIdList = new ArrayList<>();
+        for (TellerPercentage tp : dbTaskTellerPercentageList) {
+            tmpTp = new TellerPercentage();
+            tmpTp.setId(tp.getId());
+            tmpTp.setEndDate(yesterday);
+            tmpTp.setValidFlag(false);
+            tmpTp.setUpdateTime(new Date());
+            tmpTp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+
+            employeeAccountDao.updateTaskById(tmpTp);
+            newParentIdList.add(tp.getId());
+        }
+
+        //在柜员揽储账户表中插入新变更揽储人信息
+        List<TellerPercentage> tellerPercentageList = new ArrayList<>();
+        for (TellerPercentage tp:employeeAccount.getTellerTaskPercentageList()) {
+            tmpTp = new TellerPercentage();
+            tmpTp.setTellerCode(tp.getTellerCode());
+            tmpTp.setMainTeller(tp.getMainTeller());
+            tmpTp.setPercentage(tp.getPercentage());
+            tmpTp.setStartDate(new Date());
+            tmpTp.setValidFlag(false);
+            tmpTp.setRegisterType(DepositDefaultConfig.REGISTER_TYPE_REBOUND);      //登记方式：1-变更揽储人登记
+            tmpTp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+            tmpTp.setOpTellerCode(userUtils.getCurrentLoginedUser().getCode());
+            tmpTp.setParentIds(newParentIdList);
+            tmpTp.setRemarks(employeeAccount.getRemarks());
+            tmpTp.setCreateTime(new Date());
+            tmpTp.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+
+            tellerPercentageList.add(tmpTp);
+        }
+        dbEmployeeAccount.setTellerTaskPercentageList(tellerPercentageList);
+        employeeAccountDao.insertTask(dbEmployeeAccount);
+    }
+
+    /**
+     * 计酬数变更揽储人
+     * @param employeeAccount 新揽储人信息
+     */
+    @Transactional
+    public void modifyPaymentEmployee(EmployeeAccount employeeAccount) throws RuntimeException {
+        if (null == employeeAccount || employeeAccount.getTellerPaymentPercentageList() == null || employeeAccount.getTellerPaymentPercentageList().isEmpty() || StrUtil.isBlank(employeeAccount.getAccountNo())) {
+            throw new RuntimeException("变更揽储人出错, 请求参数不正确！");
+        }
+
+        // 判断员工编号是否正确、比例之和是否为100%
+        Double sumPercentage = (double)0;
+        for (TellerPercentage tp:employeeAccount.getTellerPaymentPercentageList()) {
+            User user = userService.getUserByCode(tp.getTellerCode());
+            if (null == user) {
+                throw new RuntimeException("登记揽储人出错, 编号为 [ " + tp.getTellerCode() + " ] 的员工信息不存在，请输入正确的柜员号！");
+            }
+            if (null == tp.getMainTeller()) throw new RuntimeException("登记揽储人出错，未确定是否主揽储人身份");
+            sumPercentage += tp.getPercentage();
+        }
+        if(sumPercentage != 1) throw new RuntimeException("比例求和不为100%");
+
+        // 获取原始的任务分成比例
+        TellerPercentage tmpTp = new TellerPercentage();
+        tmpTp.setAccountNo(employeeAccount.getAccountNo());
+        tmpTp.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tmpTp.setValidFlag(true);
+        List<TellerPercentage> dbPaymentTellerPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tmpTp);
+        EmployeeAccount dbEmployeeAccount = employeeAccountDao.getEmployeeAccountByAccountNoAndChildAccountNoFromPayment(tmpTp);
+
+        if (null == dbPaymentTellerPercentageList || dbPaymentTellerPercentageList.isEmpty() || dbEmployeeAccount == null) {
+            throw new RuntimeException("变更揽储人出错, 找不到对应的存款账户信息！");
+        }
+
+        // 判断当日是否已经发生过变更（当前不允许当日再次变更，后期优化）
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (TellerPercentage tp:dbPaymentTellerPercentageList) {
+            String dbDate = sdf.format(tp.getStartDate());
+            String currentDate = sdf.format(new Date());
+            if (dbDate.equals(currentDate)) throw new RuntimeException("变更为揽储人出错，当日已变更，不允许再次变更");
+        }
+
+        //将原揽储人存款账户信息设置为不可变更揽储人
+        Date yesterday = DateUtil.yesterday();
+        List<Long> newParentIdList = new ArrayList<>();
+        for (TellerPercentage tp : dbPaymentTellerPercentageList) {
+            tmpTp = new TellerPercentage();
+            tmpTp.setId(tp.getId());
+            tmpTp.setEndDate(yesterday);
+            tmpTp.setValidFlag(false);
+            tmpTp.setUpdateTime(new Date());
+            tmpTp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+
+            employeeAccountDao.updatePaymentById(tmpTp);
+            newParentIdList.add(tp.getId());
+        }
+
+        //在柜员揽储账户表中插入新变更揽储人信息
+        List<TellerPercentage> tellerPercentageList = new ArrayList<>();
+        for (TellerPercentage tp:employeeAccount.getTellerPaymentPercentageList()) {
+            tmpTp = new TellerPercentage();
+            tmpTp.setTellerCode(tp.getTellerCode());
+            tmpTp.setMainTeller(tp.getMainTeller());
+            tmpTp.setPercentage(tp.getPercentage());
+            tmpTp.setStartDate(new Date());
+            tmpTp.setValidFlag(false);
+            tmpTp.setRegisterType(DepositDefaultConfig.REGISTER_TYPE_REBOUND);      //登记方式：1-变更揽储人登记
+            tmpTp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+            tmpTp.setOpTellerCode(userUtils.getCurrentLoginedUser().getCode());
+            tmpTp.setParentIds(newParentIdList);
+            tmpTp.setRemarks(employeeAccount.getRemarks());
+            tmpTp.setCreateTime(new Date());
+            tmpTp.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+
+            tellerPercentageList.add(tmpTp);
+        }
+        dbEmployeeAccount.setTellerPaymentPercentageList(tellerPercentageList);
+        employeeAccountDao.insertPayment(dbEmployeeAccount);
+    }
+
+
+    /**
+     * 获取已变更揽储人但未复核的账户信息列表-任务数
+     */
+    public PageData<EmployeeAccount> findModifiedUncheckedAccountTaskPage(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || employeeAccount.getPage() == null) throw new RuntimeException("未提供参数");
+
+        employeeAccount.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/getmodifieduncheckedaccounttask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+
+        //设置pageNo
+        employeeAccount.setPage(new Page(employeeAccount.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+
+        PageData<EmployeeAccount> employeeAccountPageData = new PageData<>();
+        Long count = employeeAccountDao.findModifiedUncheckedAccountTaskCount(employeeAccount);
+        List<EmployeeAccount> employeeAccountList = employeeAccountDao.findModifiedUncheckedAccountTask(employeeAccount);
+
+        for (int i=0;i<employeeAccountList.size();i++){
+            EmployeeAccount ea = employeeAccountList.get(i);
+            TellerPercentage tp = new TellerPercentage();
+            tp.setAccountNo(ea.getAccountNo());
+            tp.setChildAccountNo(ea.getChildAccountNo());
+            tp.setValidFlag(false);
+            tp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);   //查找未复核的
+
+            List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tp);
+            employeeAccountList.get(i).setTellerTaskPercentageList(tellerTaskPercentageList);
+        }
+
+        employeeAccountPageData.setTotal(count);
+        employeeAccountPageData.setList(employeeAccountList);
+
+        return employeeAccountPageData;
+    }
+
+    /**
+     * 获取已变更揽储人但未复核的账户信息列表-计酬数
+     */
+    public PageData<EmployeeAccount> findModifiedUncheckedAccountPaymentPage(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || employeeAccount.getPage() == null) throw new RuntimeException("未提供参数");
+
+        employeeAccount.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/getmodifieduncheckedaccountpayment").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+
+        //设置pageNo
+        employeeAccount.setPage(new Page(employeeAccount.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+
+        PageData<EmployeeAccount> employeeAccountPageData = new PageData<>();
+        Long count = employeeAccountDao.findModifiedUncheckedAccountPaymentCount(employeeAccount);
+        List<EmployeeAccount> employeeAccountList = employeeAccountDao.findModifiedUncheckedAccountPayment(employeeAccount);
+
+        for (int i=0;i<employeeAccountList.size();i++){
+            EmployeeAccount ea = employeeAccountList.get(i);
+            TellerPercentage tp = new TellerPercentage();
+            tp.setAccountNo(ea.getAccountNo());
+            tp.setChildAccountNo(ea.getChildAccountNo());
+            tp.setValidFlag(false);
+            tp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);   //查找未复核的
+
+            List<TellerPercentage> tellerPaymentPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tp);
+            employeeAccountList.get(i).setTellerPaymentPercentageList(tellerPaymentPercentageList);
+        }
+
+        employeeAccountPageData.setTotal(count);
+        employeeAccountPageData.setList(employeeAccountList);
+
+        return employeeAccountPageData;
+    }
+
+
+
+    /**
+     * 复核变更揽储人申请-任务数
+     * @param employeeAccount 包含账号、子账号
+     */
+    @Transactional
+    public void checkModifyEmployeeTask(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || StrUtil.isBlank(employeeAccount.getAccountNo())) throw new RuntimeException("未提供参数");
+
+        TellerPercentage tellerPercentage = new TellerPercentage();
+        tellerPercentage.setAccountNo(employeeAccount.getAccountNo());
+        tellerPercentage.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tellerPercentage.setValidFlag(false);
+        tellerPercentage.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+
+        // 复核任务分成信息
+        List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tellerPercentage);
+        if (null == tellerTaskPercentageList || tellerTaskPercentageList.isEmpty()) throw new RuntimeException("不存在未复核的记录");
+
+        //修改状态为已复核
+        for (TellerPercentage tp:tellerTaskPercentageList) {
+            tp.setValidFlag(true);
+            tp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);
+            tp.setAlterCheckTellerCode(userUtils.getCurrentLoginedUser().getCode());
+            tp.setAlterCheckTime(new Date());
+            tp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            tp.setUpdateTime(new Date());
+
+            employeeAccountDao.updateTaskById(tp);
+        }
+
+        // 复核计酬分成信息
+        List<TellerPercentage> tellerPaymentPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tellerPercentage);
+        if (null == tellerPaymentPercentageList || tellerPaymentPercentageList.isEmpty()) throw new RuntimeException("不存在未复核的记录");
+
+        //修改状态为已复核
+        for (TellerPercentage tp:tellerPaymentPercentageList) {
+            tp.setValidFlag(true);
+            tp.setRegisterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);
+            tp.setRegisterCheckTellerCode(userUtils.getCurrentLoginedUser().getCode());
+            tp.setRegisterCheckTime(new Date());
+            tp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            tp.setUpdateTime(new Date());
+
+            employeeAccountDao.updatePaymentById(tp);
+        }
+    }
+
+    /**
+     * 复核变更揽储人申请-计酬数
+     * @param employeeAccount 包含账号、子账号
+     */
+    @Transactional
+    public void checkModifyEmployeePayment(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || StrUtil.isBlank(employeeAccount.getAccountNo())) throw new RuntimeException("未提供参数");
+
+        TellerPercentage tellerPercentage = new TellerPercentage();
+        tellerPercentage.setAccountNo(employeeAccount.getAccountNo());
+        tellerPercentage.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tellerPercentage.setValidFlag(false);
+        tellerPercentage.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+
+        // 复核计酬分成信息
+        List<TellerPercentage> tellerPaymentPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tellerPercentage);
+        if (null == tellerPaymentPercentageList || tellerPaymentPercentageList.isEmpty()) throw new RuntimeException("不存在未复核的记录");
+
+        //修改状态为已复核
+        for (TellerPercentage tp:tellerPaymentPercentageList) {
+            tp.setValidFlag(true);
+            tp.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_CHECKED);
+            tp.setAlterCheckTellerCode(userUtils.getCurrentLoginedUser().getCode());
+            tp.setAlterCheckTime(new Date());
+            tp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            tp.setUpdateTime(new Date());
+
+            employeeAccountDao.updatePaymentById(tp);
+        }
+
+    }
+
+    /**
+     * 撤销变更揽储人申请-任务数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     */
+    @Transactional
+    public void undoModifyEmployeeTask(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || StrUtil.isBlank(employeeAccount.getAccountNo())) throw new RuntimeException("未提供参数");
+
+        TellerPercentage tellerPercentage = new TellerPercentage();
+        tellerPercentage.setAccountNo(employeeAccount.getAccountNo());
+        tellerPercentage.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tellerPercentage.setValidFlag(false);
+        tellerPercentage.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+
+        // 查找未复核的任务分成信息
+        List<TellerPercentage> tellerTaskPercentageList = employeeAccountDao.getTellerTaskPercentageListByAccountNoAndChildAccountNo(tellerPercentage);
+        if (null == tellerTaskPercentageList || tellerTaskPercentageList.isEmpty()) throw new RuntimeException("不存在未复核的记录");
+
+        //将原揽储人存款账户信息设置为可变更揽储人
+        Set<Long> parentIds = new HashSet<>();
+        for (TellerPercentage tp:tellerTaskPercentageList) {
+            parentIds.addAll(tp.getParentIds());
+        }
+        for (Long id:parentIds){
+            TellerPercentage tp = new TellerPercentage();
+            tp.setId(id);
+            tp.setValidFlag(true);
+            tp.setEndDate(null);
+            tp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            tp.setUpdateTime(new Date());
+
+            employeeAccountDao.updateTaskById(tp);
+        }
+
+        //删除新记录
+        for (TellerPercentage tp:tellerTaskPercentageList) {
+            employeeAccountDao.deleteTask(tp.getId());
+        }
+
+    }
+
+    /**
+     * 撤销变更揽储人申请-计酬数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     */
+    @Transactional
+    public void undoModifyEmployeePayment(EmployeeAccount employeeAccount) {
+        if (null == employeeAccount || StrUtil.isBlank(employeeAccount.getAccountNo())) throw new RuntimeException("未提供参数");
+
+        TellerPercentage tellerPercentage = new TellerPercentage();
+        tellerPercentage.setAccountNo(employeeAccount.getAccountNo());
+        tellerPercentage.setChildAccountNo(employeeAccount.getChildAccountNo());
+        tellerPercentage.setValidFlag(false);
+        tellerPercentage.setAlterCheckStatus(DepositDefaultConfig.CHECKED_STATUS_UNCHECKED);
+
+        // 查找未复核的任务分成信息
+        List<TellerPercentage> tellerPaymentPercentageList = employeeAccountDao.getTellerPaymentPercentageListByAccountNoAndChildAccountNo(tellerPercentage);
+        if (null == tellerPaymentPercentageList || tellerPaymentPercentageList.isEmpty()) throw new RuntimeException("不存在未复核的记录");
+
+        //将原揽储人存款账户信息设置为可变更揽储人
+        Set<Long> parentIds = new HashSet<>();
+        for (TellerPercentage tp:tellerPaymentPercentageList) {
+            parentIds.addAll(tp.getParentIds());
+        }
+        for (Long id:parentIds){
+            TellerPercentage tp = new TellerPercentage();
+            tp.setId(id);
+            tp.setValidFlag(true);
+            tp.setEndDate(null);
+            tp.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+            tp.setUpdateTime(new Date());
+
+            employeeAccountDao.updatePaymentById(tp);
+        }
+
+        //删除新记录
+        for (TellerPercentage tp:tellerPaymentPercentageList) {
+            employeeAccountDao.deletePayment(tp.getId());
+        }
+
     }
 
 

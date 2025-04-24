@@ -177,8 +177,186 @@ public class EmployeeAccountController {
         return responseJson;
     }
 
+    /**
+     * 变更揽储人申请-任务数
+     * @param employeeAccount 包含accountNo、childAccountNo、tellerTaskPercentageList（这里包含新的用户分成信息:tellerCode、percentage）
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:modifyemployeetask')")
+    @RequestMapping(value = "/modifyemployeetask")
+    public ResponseJson modifyEmployeeTask(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.modifyTaskEmployee(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("变更申请已提交");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
 
 
+    /**
+     * 变更揽储人申请-计酬数
+     * @param employeeAccount 包含accountNo、childAccountNo、tellerPaymentPercentageList（这里包含新的用户分成信息:tellerCode、percentage）
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:modifyemployeepayment')")
+    @RequestMapping(value = "/modifyemployeepayment")
+    public ResponseJson modifyEmployeePayment(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.modifyPaymentEmployee(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("变更申请已提交");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+
+    /**
+     * 获取已变更揽储人但未复核的账户信息列表-任务数
+     * @param employeeAccount 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:getmodifieduncheckedaccounttask')")
+    @RequestMapping(value = "/getmodifieduncheckedaccounttask")
+    public ResponseJson getModifiedUncheckedAccountTask(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<EmployeeAccount> employeeAccountPageData = employeeAccountService.findModifiedUncheckedAccountTaskPage(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setData(employeeAccountPageData.getList());
+            responseJson.setTotal(employeeAccountPageData.getTotal());
+            responseJson.setMsg("获取变更未复核任务数列表成功");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+
+    /**
+     * 获取已变更揽储人但未复核的账户信息列表-计酬数
+     * @param employeeAccount 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:getmodifieduncheckedaccountpayment')")
+    @RequestMapping(value = "/getmodifieduncheckedaccountpayment")
+    public ResponseJson getModifiedUncheckedAccountPayment(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<EmployeeAccount> employeeAccountPageData = employeeAccountService.findModifiedUncheckedAccountPaymentPage(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setData(employeeAccountPageData.getList());
+            responseJson.setTotal(employeeAccountPageData.getTotal());
+            responseJson.setMsg("获取变更未复核计酬数列表成功");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+
+
+    /**
+     * 复核变更揽储人申请-任务数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     * @return
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:checkmodifyemployeetask')")
+    @RequestMapping(value = "/checkmodifyemployeetask")
+    public ResponseJson checkModifyEmployeeTask(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.checkModifyEmployeeTask(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("任务数变更申请已通过");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 复核变更揽储人申请-计酬数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     * @return
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:checkmodifyemployeepayment')")
+    @RequestMapping(value = "/checkmodifyemployeepayment")
+    public ResponseJson checkModifyEmployeePayment(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.checkModifyEmployeePayment(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("计酬数变更申请已通过");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+
+    /**
+     * 撤销变更揽储人申请- 任务数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:undomodifyemployeetask')")
+    @RequestMapping(value = "/undomodifyemployeetask")
+    public ResponseJson undoModifyEmployeeTask(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.undoModifyEmployeeTask(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("任务数变更申请已拒绝");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 撤销变更揽储人申请- 计酬数
+     * @param employeeAccount 包含accountNo、childAccountNo
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:undomodifyemployeepayment')")
+    @RequestMapping(value = "/undomodifyemployeepayment")
+    public ResponseJson undoModifyEmployeePayment(@RequestBody EmployeeAccount employeeAccount) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            employeeAccountService.undoModifyEmployeePayment(employeeAccount);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("计酬数变更申请已拒绝");
+        }catch (Exception e) {
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
 
 
 }
