@@ -36,6 +36,7 @@ public class TellerPercentage extends BaseDataScopePageEntity<TellerPercentage> 
     private String tellerOrgCode;
     private String tellerOrgName;
 
+    private String orgCode;
     private String accountNo;       //用于搜索
     private String childAccountNo;  //用于搜索
     private Long organizationId;

@@ -780,7 +780,55 @@ public class EmployeeAccountService {
 
     }
 
+    /**
+     * 获取员工和存款账户的关联信息列表- 任务分成
+     * @param tellerPercentage 包含分页信息、搜索信息
+     */
+    public PageData<TellerPercentage> findTellerPercentageTaskPage(TellerPercentage tellerPercentage) {
+        if (null == tellerPercentage || tellerPercentage.getPage() == null) throw new RuntimeException("未提供参数");
 
+        tellerPercentage.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/gettask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+
+        //设置pageNo
+        tellerPercentage.setPage(new Page(tellerPercentage.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+
+        //设置只筛选当前生效的记录
+        tellerPercentage.setValidFlag(true);
+
+        PageData<TellerPercentage> tellerPercentagePageData = new PageData<>();
+        Long count = employeeAccountDao.getTellerTaskPercentageListCount(tellerPercentage);
+        List<TellerPercentage> tellerPercentageList = employeeAccountDao.getTellerTaskPercentageList(tellerPercentage);
+
+        tellerPercentagePageData.setTotal(count);
+        tellerPercentagePageData.setList(tellerPercentageList);
+
+        return tellerPercentagePageData;
+    }
+
+    /**
+     * 获取员工和存款账户的关联信息列表- 计酬分成
+     * @param tellerPercentage 包含分页信息、搜索信息
+     */
+    public PageData<TellerPercentage> findTellerPercentagePaymentPage(TellerPercentage tellerPercentage) {
+        if (null == tellerPercentage || tellerPercentage.getPage() == null) throw new RuntimeException("未提供参数");
+
+        tellerPercentage.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/employeeaccount/getpayment").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
+
+        //设置pageNo
+        tellerPercentage.setPage(new Page(tellerPercentage.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+
+        //设置只筛选当前生效的记录
+        tellerPercentage.setValidFlag(true);
+
+        PageData<TellerPercentage> tellerPercentagePageData = new PageData<>();
+        Long count = employeeAccountDao.getTellerPaymentPercentageListCount(tellerPercentage);
+        List<TellerPercentage> tellerPercentageList = employeeAccountDao.getTellerPaymentPercentageList(tellerPercentage);
+
+        tellerPercentagePageData.setTotal(count);
+        tellerPercentagePageData.setList(tellerPercentageList);
+
+        return tellerPercentagePageData;
+    }
 
 
 

@@ -432,6 +432,12 @@
         <id property="id" column="id" />
         <result property="accountNo" column="account_no" />
         <result property="childAccountNo" column="child_account_no" />
+        <result property="cardNo" column="card_no" />
+        <result property="customerNo" column="customer_no" />
+        <result property="customerName" column="customer_name" />
+        <result property="identityType" column="identity_type" />
+        <result property="identityNo" column="identity_no" />
+        <result property="accountOpenDate" column="account_open_date" />
         <result property="tellerCode" column="teller_code" />
         <result property="percentage" column="percentage" />
         <result property="mainTeller" column="main_teller" />
@@ -878,8 +884,8 @@
         </where>
         GROUP BY ea.org_code,ea.account_no,ea.child_account_no,ea.card_no,ea.account_type,ea.account_open_date,ea.customer_no,ea.customer_name,ea.customer_type,ea.identity_no,ea.identity_type,dpfm01.close_acct_flag
         <choose>
-            <when test="page !=null ">
-                ORDER BY ea.account_no DESC
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY ea.account_no DESC
@@ -1241,6 +1247,254 @@
             </when>
             <otherwise>
                 ORDER BY ea.account_no DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 获取员工任务分成信息 -->
+    <select id="getTellerTaskPercentageListCount" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="java.lang.Long">
+        select
+            count(*)
+        from
+            bps_78000.t_cktj_employee_account_task ea
+            LEFt JOIN public.t_sys_user u on ea.teller_code = u.code
+            LEFT JOIN public.t_sys_organization o on ea.org_code = o.code
+        <where>
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="childAccountNo != null and childAccountNo != ''">
+                ea.child_account_no = #{childAccountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                and ea.teller_code = #{tellerCode}
+            </if>
+            <if test="validFlag != null ">
+                and ea.valid_flag = #{validFlag}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <!-- 获取员工任务分成信息 -->
+    <select id="getTellerTaskPercentageList" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultMap="tellerTaskPercentageMap">
+        select
+            ea.id,
+            ea.account_no,
+            ea.child_account_no,
+            ea.card_no,
+            ea.customer_no,
+            ea.customer_name,
+            ea.identity_type,
+            ea.identity_no,
+            ea.account_open_date,
+            ea.teller_code,
+            ea.percentage,
+            ea.main_teller,
+            ea.start_date,
+            ea.end_date,
+            ea.valid_flag,
+            ea.register_type,
+            ea.register_check_status,
+            ea.alter_check_status,
+            ea.op_teller_code,
+            ea.register_check_teller_code,
+            ea.alter_check_teller_code,
+            ea.register_check_time,
+            ea.alter_check_time,
+            ea.parent_ids,
+            ea.remarks,
+            ea.create_time,
+            ea.create_by,
+            ea.update_time,
+            ea.update_by,
+            u.name as teller_name
+        from
+            bps_78000.t_cktj_employee_account_task ea
+            LEFt JOIN public.t_sys_user u on ea.teller_code = u.code
+            LEFT JOIN public.t_sys_organization o on ea.org_code = o.code
+        <where>
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="childAccountNo != null and childAccountNo != ''">
+                ea.child_account_no = #{childAccountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                and ea.teller_code = #{tellerCode}
+            </if>
+            <if test="validFlag != null ">
+                and ea.valid_flag = #{validFlag}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY ea.org_code ASC,ea.account_no DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 获取员工计酬分成信息 -->
+    <select id="getTellerPaymentPercentageListCount" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultType="java.lang.Long">
+        select
+        count(*)
+        from
+        bps_78000.t_cktj_employee_account_payment ea
+        LEFt JOIN public.t_sys_user u on ea.teller_code = u.code
+        LEFT JOIN public.t_sys_organization o on ea.org_code = o.code
+        <where>
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="childAccountNo != null and childAccountNo != ''">
+                ea.child_account_no = #{childAccountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                and ea.teller_code = #{tellerCode}
+            </if>
+            <if test="validFlag != null ">
+                and ea.valid_flag = #{validFlag}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <!-- 获取员工计酬分成信息 -->
+    <select id="getTellerPaymentPercentageList" parameterType="org.nmgns.bps.cktj.entity.TellerPercentage" resultMap="tellerTaskPercentageMap">
+        select
+            ea.id,
+            ea.account_no,
+            ea.child_account_no,
+            ea.card_no,
+            ea.customer_no,
+            ea.customer_name,
+            ea.identity_type,
+            ea.identity_no,
+            ea.account_open_date,
+            ea.teller_code,
+            ea.percentage,
+            ea.main_teller,
+            ea.start_date,
+            ea.end_date,
+            ea.valid_flag,
+            ea.register_type,
+            ea.register_check_status,
+            ea.alter_check_status,
+            ea.op_teller_code,
+            ea.register_check_teller_code,
+            ea.alter_check_teller_code,
+            ea.register_check_time,
+            ea.alter_check_time,
+            ea.parent_ids,
+            ea.remarks,
+            ea.create_time,
+            ea.create_by,
+            ea.update_time,
+            ea.update_by,
+            u.name as teller_name
+        from
+        bps_78000.t_cktj_employee_account_payment ea
+        LEFt JOIN public.t_sys_user u on ea.teller_code = u.code
+        LEFT JOIN public.t_sys_organization o on ea.org_code = o.code
+        <where>
+            <if test="organizationId != null" >
+                AND o.id = #{organizationId}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND ea.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="accountNo != null and accountNo != ''">
+                AND ea.account_no = #{accountNo}
+            </if>
+            <if test="childAccountNo != null and childAccountNo != ''">
+                ea.child_account_no = #{childAccountNo}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                AND ea.card_no LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ea.customer_name LIKE '%'||#{cardNo}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ea.identity_no = #{identityNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                and ea.teller_code = #{tellerCode}
+            </if>
+            <if test="validFlag != null ">
+                and ea.valid_flag = #{validFlag}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY ea.org_code ASC,ea.account_no DESC
             </otherwise>
         </choose>
         <if test="page != null and page.start >= 0 and page.pageSize > 0">

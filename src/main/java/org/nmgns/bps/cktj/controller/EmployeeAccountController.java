@@ -1,6 +1,7 @@
 package org.nmgns.bps.cktj.controller;
 
 import org.nmgns.bps.cktj.entity.EmployeeAccount;
+import org.nmgns.bps.cktj.entity.TellerPercentage;
 import org.nmgns.bps.cktj.service.EmployeeAccountService;
 import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
@@ -351,6 +352,52 @@ public class EmployeeAccountController {
             responseJson.setMsg("计酬数变更申请已拒绝");
         }catch (Exception e) {
             e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 获取揽储人存款账户信息列表- 任务
+     * @param tellerPercentage 包含分页信息、搜索信息
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:gettask')")
+    @RequestMapping(value = "/gettask")
+    public ResponseJson getTask(@RequestBody TellerPercentage tellerPercentage) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findTellerPercentageTaskPage(tellerPercentage);
+            responseJson.setSuccess(true);
+            responseJson.setData(tellerPercentagePageData.getList());
+            responseJson.setTotal(tellerPercentagePageData.getTotal());
+            responseJson.setMsg("获取任务分成列表成功");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 获取揽储人存款账户信息列表 -计酬
+     * @param tellerPercentage 包含分页信息、搜索信息
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:getpayment')")
+    @RequestMapping(value = "/getpayment")
+    public ResponseJson getPayment(@RequestBody TellerPercentage tellerPercentage) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findTellerPercentagePaymentPage(tellerPercentage);
+            responseJson.setSuccess(true);
+            responseJson.setData(tellerPercentagePageData.getList());
+            responseJson.setTotal(tellerPercentagePageData.getTotal());
+            responseJson.setMsg("获取计酬分成列表成功");
+        }catch (Exception e) {
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());
         }

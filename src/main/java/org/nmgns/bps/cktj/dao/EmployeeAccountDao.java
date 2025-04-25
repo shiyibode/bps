@@ -66,4 +66,12 @@ public interface EmployeeAccountDao {
 
     public List<EmployeeAccount> findModifiedUncheckedAccountPayment(EmployeeAccount ea);
 
+    public Long getTellerTaskPercentageListCount(TellerPercentage tp);
+
+    public List<TellerPercentage> getTellerTaskPercentageList(TellerPercentage tp);
+
+    public Long getTellerPaymentPercentageListCount(TellerPercentage tp);
+
+    public List<TellerPercentage> getTellerPaymentPercentageList(TellerPercentage tp);
+
 }

@@ -316,7 +316,7 @@ COMMENT ON COLUMN bps_78000.t_cktj_employee_deposit_payment_detail.update_time I
 -- bps_78000.t_cktj_employee_deposit_payment_detail 表索引
 CREATE UNIQUE INDEX ON bps_78000.t_cktj_employee_deposit_payment_detail(date, teller_code, dp_org_code, belong_org_code, dp_category_id);
 
--- 机构存款明细表
+-- 机构存款明细表-任务数
 DROP TABLE IF EXISTS bps_78000.t_cktj_organization_deposit_task_detail;
 CREATE TABLE bps_78000.t_cktj_organization_deposit_task_detail (
     id BIGSERIAL NOT NULL PRIMARY KEY,
