@@ -1,6 +1,5 @@
 -- 生成未绑定到员工的存款账号列表
 DROP FUNCTION IF EXISTS cktj_generate_unbound_customer(para_org_code varchar, para_date Date);
-
 CREATE OR REPLACE FUNCTION cktj_generate_unbound_customer(para_org_code varchar, para_date Date)
     RETURNS BOOLEAN
 AS $$
@@ -48,47 +47,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- 通过科目号查找存款分类
-DROP FUNCTION IF EXISTS cktj_get_deposit_category_by_subject_no(in_subject_no VARCHAR, in_customer_type VARCHAR);
-CREATE OR REPLACE FUNCTION cktj_get_deposit_category_by_subject_no(in_subject_no VARCHAR, in_customer_type VARCHAR)
-    RETURNS SETOF bps_78000.t_cktj_deposit_category AS
-$$
-DECLARE
-    tmp_count integer;
-BEGIN
-
-	-- 特殊情况判断
-	if in_subject_no = '211101' and in_customer_type = '2' then
-		in_customer_type = '1';
-	end if;	
-
-    -- 正常情况
-    IF in_customer_type ISNULL THEN
-        SELECT count(*) FROM bps_78000.t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type ISNULL INTO tmp_count;
-        IF tmp_count = 0 THEN
-            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找不到存款分类',in_subject_no,in_customer_type;
-        ELSEIF tmp_count > 1 THEN
-             RAISE EXCEPTION '通过科目号: %, 客户类型: % 找到多个存款分类',in_subject_no,in_customer_type;
-        ELSE
-            RETURN QUERY (SELECT * FROM bps_78000.t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type ISNULL );
-        END IF;
-    ELSE
-        SELECT count(*) FROM bps_78000.t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type = in_customer_type INTO tmp_count;
-        IF tmp_count = 0 THEN
-            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找不到存款分类',in_subject_no,in_customer_type;
-        ELSEIF tmp_count > 1 THEN
-            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找到多个存款分类',in_subject_no,in_customer_type;
-        ELSE
-            RETURN QUERY (SELECT * FROM bps_78000.t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type = in_customer_type );
-        END IF;
-    END IF;
-
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE EXCEPTION '存储过程 get_deposit_category_by_subject_no 执行错误: %', SQLERRM;
-END;
-$$ LANGUAGE plpgsql;
-
 -- 通过账户查找揽储人
 -- DROP FUNCTION IF EXISTS cktj_get_teller_code_by_account_no(account_no VARCHAR, data_date DATE);
 -- CREATE OR REPLACE FUNCTION cktj_get_teller_code_by_account_no(account_no VARCHAR, data_date DATE)
@@ -126,6 +84,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- 通过科目号查找存款分类
+DROP FUNCTION IF EXISTS cktj_get_deposit_category_by_subject_no(in_subject_no VARCHAR, in_customer_type VARCHAR);
+CREATE OR REPLACE FUNCTION cktj_get_deposit_category_by_subject_no(in_subject_no VARCHAR, in_customer_type VARCHAR)
+    RETURNS SETOF t_cktj_deposit_category AS
+$$
+DECLARE
+    tmp_count integer;
+BEGIN
+
+    -- 特殊情况判断
+    if in_subject_no = '211101' and in_customer_type = '2' then
+        in_customer_type = '1';
+    end if;
+
+    -- 正常情况
+    IF in_customer_type ISNULL THEN
+        SELECT count(*) FROM t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type ISNULL INTO tmp_count;
+        IF tmp_count = 0 THEN
+            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找不到存款分类',in_subject_no,in_customer_type;
+        ELSEIF tmp_count > 1 THEN
+            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找到多个存款分类',in_subject_no,in_customer_type;
+        ELSE
+            RETURN QUERY (SELECT * FROM t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type ISNULL );
+        END IF;
+    ELSE
+        SELECT count(*) FROM t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type = in_customer_type INTO tmp_count;
+        IF tmp_count = 0 THEN
+            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找不到存款分类',in_subject_no,in_customer_type;
+        ELSEIF tmp_count > 1 THEN
+            RAISE EXCEPTION '通过科目号: %, 客户类型: % 找到多个存款分类',in_subject_no,in_customer_type;
+        ELSE
+            RETURN QUERY (SELECT * FROM t_cktj_deposit_category WHERE subject_no @> CAST(string_to_array(in_subject_no, ',') AS VARCHAR[]) AND customer_type = in_customer_type );
+        END IF;
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION '存储过程 get_deposit_category_by_subject_no 执行错误: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql;
 
 
 -- 通过账号和账号类型获取客户类型
@@ -181,6 +180,7 @@ DECLARE
     tmp_dp_curr_date date;
     date_dpfm02 date;
     next_date date;
+    tmp_cnt integer;
 BEGIN
 
     tmp_count_1 := 0;
@@ -190,15 +190,15 @@ BEGIN
     END IF;
 
     tmp_count_2 := 0;
-    SELECT count(*) FROM bps_78000.t_cktj_employee_account_task a  WHERE a.org_code = para_org_code AND (a.register_check_status = '0' OR a.alter_check_status = '0') AND a.start_date <= para_data_date INTO tmp_count_2;
+    SELECT count(*) FROM bps_78000.t_cktj_employee_account_task a  WHERE a.org_code = para_org_code AND (a.register_check_status = 'CHECKED_STATUS_UNCHECKED' OR a.alter_check_status = 'CHECKED_STATUS_UNCHECKED') AND a.start_date <= para_data_date INTO tmp_count_2;
     IF tmp_count_2 > 0 THEN
-        RAISE EXCEPTION '机构 % 尚有 % 个账户未复核',para_org_code,tmp_count_2;
+        RAISE EXCEPTION '机构 % 尚有 % 个账户未复核-任务',para_org_code,tmp_count_2;
     END IF;
 
     tmp_count_2 := 0;
     SELECT count(*) FROM bps_78000.t_cktj_employee_account_payment a  WHERE a.org_code = para_org_code AND (a.register_check_status = '0' OR a.alter_check_status = '0') AND a.start_date <= para_data_date INTO tmp_count_2;
     IF tmp_count_2 > 0 THEN
-        RAISE EXCEPTION '机构 % 尚有 % 个账户未复核',para_org_code,tmp_count_2;
+        RAISE EXCEPTION '机构 % 尚有 % 个账户未复核-计酬',para_org_code,tmp_count_2;
     END IF;
 
     SELECT dp_curr_date FROM bps_78000.t_cktj_deposit_handle_config WHERE org_code = para_org_code AND type = '0' INTO tmp_dp_curr_date;
@@ -286,11 +286,19 @@ BEGIN
                 RAISE EXCEPTION '通过科目号: %, 账号: %, 客户性质: %, 找不到对应的存款分类！', rs.subject_no, rs.account_no, customer_type;
             END IF;
 
---             SELECT cktj_get_teller_code_by_account_no(rs.account_no, para_data_date) INTO tmp_teller_code;
---             IF tmp_teller_code IS NULL OR tmp_teller_code = '' THEN
---                 RAISE EXCEPTION '通过账号: %, 日期: %, 找不到对应的揽储人！', rs.account_no, para_data_date;
---             END IF;
+            -- 判断是否存在任务分成
+            SELECT count(*) FROM bps_78000.t_cktj_employee_account_task where account_no = rs.account_no and coalesce(rs.child_account_no,'') = coalesce(child_account_no,'') and (para_data_date BETWEEN start_date AND COALESCE(end_date, '2999-12-31'::DATE) ) into tmp_cnt;
+            IF tmp_cnt = 0 THEN
+                RAISE EXCEPTION '通过账号: %, 子账号: %, 日期: %, 找不到对应的揽储人-任务！', rs.account_no, rs.child_account_no, para_data_date;
+            END IF;
 
+            -- 判断是否存在计酬分成
+            SELECT count(*) FROM bps_78000.t_cktj_employee_account_payment where account_no = rs.account_no and coalesce(rs.child_account_no,'') = coalesce(child_account_no,'') and para_data_date BETWEEN start_date AND COALESCE(end_date, '2999-12-31'::DATE) into tmp_cnt;
+            IF tmp_cnt = 0 THEN
+                RAISE EXCEPTION '通过账号: %, 子账号: %, 日期: %, 找不到对应的揽储人-计酬！', rs.account_no, rs.child_account_no, para_data_date;
+            END IF;
+
+            ea_record := null;
             FOR ea_record IN SELECT * FROM bps_78000.t_cktj_employee_account_task WHERE start_date >= para_data_date AND para_data_date <= coalesce(end_date,'2099-12-31') AND account_no = rs.account_no LOOP
                     -- 通过柜员号和日期查找柜员在职机构
                     SELECT get_org_code_by_teller_code(ea_record.teller_code, para_data_date) INTO teller_org_code;
@@ -299,13 +307,13 @@ BEGIN
                     END IF;
 
                     -- 1、计算机构存款
-                    IF (dp_category.belong_to = '0' OR dp_category.belong_to = '2') THEN
-                        EXECUTE insert_orgdp_task_sql USING para_data_date, dp_category.id, rs.before_day_balance, rs.org_code, teller_org_code;
+                    IF (dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_EMPLOYEE_AND_ORG' OR dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_ORG') THEN
+                        EXECUTE insert_orgdp_task_sql USING para_data_date, dp_category.id, rs.before_day_balance*ea_record.percentage, rs.org_code, teller_org_code;
                     END IF;
 
                     -- 2、计算员工存款-任务数
-                    IF (dp_category.belong_to = '0' OR dp_category.belong_to = '1') THEN
-                        EXECUTE insert_empdp_task_sql USING para_data_date, ea_record.teller_code, teller_org_code, dp_category.id, rs.before_day_balance, rs.org_code, teller_org_code;
+                    IF (dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_EMPLOYEE_AND_ORG' OR dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_EMPLOYEE') THEN
+                        EXECUTE insert_empdp_task_sql USING para_data_date, ea_record.teller_code, teller_org_code, dp_category.id, rs.before_day_balance*ea_record.percentage, rs.org_code, teller_org_code;
                     END IF;
             END LOOP;
 
@@ -317,9 +325,9 @@ BEGIN
                         RAISE EXCEPTION '通过柜员号: %, 日期: %, 找不到该柜员的在职机构！', tmp_teller_code, para_data_date;
                     END IF;
 
-                    -- 2、计算员工存款-任务数
-                    IF (dp_category.belong_to = '0' OR dp_category.belong_to = '1') THEN
-                        EXECUTE insert_empdp_payment_sql USING para_data_date, ea_record.teller_code, teller_org_code, dp_category.id, rs.before_day_balance, rs.org_code, teller_org_code;
+                    -- 计算员工存款-计酬数
+                    IF (dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_EMPLOYEE_AND_ORG' OR dp_category.belong_to = 'DEPOSIT_CATEGORY_BELONG_TO_EMPLOYEE') THEN
+                        EXECUTE insert_empdp_payment_sql USING para_data_date, ea_record.teller_code, teller_org_code, dp_category.id, rs.before_day_balance*ea_record.percentage, rs.org_code, teller_org_code;
                     END IF;
                 END LOOP;
 
@@ -347,16 +355,12 @@ BEGIN
     next_date := para_data_date + INTERVAL '1 day';
     UPDATE bps_78000.t_cktj_deposit_handle_config SET dp_next_date = next_date,dp_curr_date = para_data_date,update_time = now() WHERE org_code = para_org_code AND type = '1';
 
-	drop table tmp_empdp_task_detail;
-	drop table tmp_empdp_payment_detail;
-	drop table tmp_orgdp_task_detail;
+	drop table if exists tmp_empdp_task_detail;
+	drop table if exists tmp_empdp_payment_detail;
+	drop table if exists tmp_orgdp_task_detail;
 
     RETURN TRUE;
 
--- EXCEPTION
---     WHEN OTHERS THEN
---         RAISE NOTICE '存储过程 cktj_calculate_deposit_detail 执行错误: %', SQLERRM;
---         RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
 
