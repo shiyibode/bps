@@ -200,6 +200,11 @@
         ORDER BY u.code LIMIT 10
     </select>
 
+    <!-- 获取存款的最大跑批日期 -->
+    <select id="getMaxDepositCurrDate" resultType="java.util.Date">
+        SELECT max(dp_curr_date) from bps_78000.t_cktj_deposit_handle_config WHERE type = '1';
+    </select>
+
 
 
 

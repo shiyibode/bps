@@ -1,5 +1,8 @@
 package org.nmgns.bps;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.crypto.digest.MD5;
 import org.junit.jupiter.api.Test;
 import org.nmgns.bps.system.entity.TreeMenu;
@@ -41,6 +44,11 @@ class BpsApplicationTests {
 
 //        PageData<User> userPage = userService.getUserListPage(1);
 //        System.out.println(userPage.getTotal());
+
+//        DateTime start = DateUtil.parseDate("2023-01-01");
+//        DateTime end = DateUtil.parseDate("2023-01-31");
+//        long days = DateUtil.between(start, end, DateUnit.DAY);
+//        System.out.println(days);
     }
 
 }

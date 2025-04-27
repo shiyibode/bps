@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -67,6 +68,14 @@ public class UserUtils {
     }
 
     /**
+     * 获取当前登录用户的在职机构
+     */
+    public UserOrganization getCurrentUserOrganization(){
+        User currentUser = getCurrentLoginedUser();
+        return userDao.getValidUserOrganizationByUserId(currentUser.getId());
+    }
+
+    /**
      * 获取用户的真实ip
      * @param request
      */
@@ -99,6 +108,16 @@ public class UserUtils {
         }
 
         return ipAddress;
+    }
+
+    /**
+     * 获取存款跑批的最大日期（全部网点都已经跑批过的日期）
+     */
+    public Date getMaxDepositCurrDate() {
+        Date maxDepositDate = userDao.getMaxDepositCurrDate();
+        if (null == maxDepositDate) throw new RuntimeException("读取存款配置表失败");
+
+        return maxDepositDate;
     }
 
 

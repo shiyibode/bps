@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.nmgns.bps.cktj.dao.DepositDao">
+
+    <sql id="empColumns">
+        a.teller_code,
+        a.teller_org_code,
+        u.name AS teller_name,
+        uo.name AS teller_org_name,
+    </sql>
+
+    <sql id="orgExportDepositColumns">
+        a.date,
+        a.dp_org_code,
+        dpo.name AS dp_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        pdc.name AS parent_category_name,
+        SUM (a.balance) AS balance
+    </sql>
+
+    <sql id="orgDepositColumns">
+        a.id,
+        a.date,
+        a.dp_org_code,
+        dpo.name AS dp_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        a.dp_category_id,
+        pdc.name AS parent_category_name,
+        dc.no AS dp_category_no,
+        dc.name AS dp_category_name,
+        a.balance,
+        a.prvisn_int,
+        a.ttl_pay_int,
+        a.day_pay_int
+    </sql>
+
+    <!-- 员工任务数时点-->
+    <select id="findEmployeeDepositList" resultType="org.nmgns.bps.cktj.entity.Deposit" >
+        SELECT
+        <include refid="empColumns" />
+        <include refid="orgDepositColumns"/>
+        FROM
+            bps_78000.t_cktj_employee_deposit_task_detail a
+            LEFT JOIN bps_78000.t_cktj_deposit_category dc on dc.id = a.dp_category_id
+            LEFT JOIN bps_78000.t_cktj_deposit_category pdc on pdc.id = dc.parent_id
+            LEFT JOIN public.t_sys_organization dpo on dpo.code = a.dp_org_code
+            LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+            LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+            LEFT JOIN public.t_sys_organization uo ON uo.code = a.teller_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统存款: 本机构员工在本机构存款 + 其他机构员工从本机构调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_ACCOUNTING_WAY' ">
+                        ( dpo.id = #{organizationId} OR dpo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 员工实际存款: 本机构员工在本机构存款 + 本机构员工从其他机构调入存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_MANAGE_WAY' ">
+                        ( blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 员工在本机构存款: 核心系统存款 - 其他机构员工从本机构调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_ACCOUNTING_OWN_TERMINAL' ">
+                        ( a.belong_org_code = a.dp_org_code AND ( dpo.id = #{organizationId} OR dpo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                    <!-- 调入存款: 员工从其他机构调入存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_IN' ">
+                        ( a.belong_org_code != a.dp_org_code AND ( blo.id = #{organizationId} OR ( blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )) )
+                    </when>
+                    <!-- 调离存款: 其他机构员工从本机构调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_OUT' ">
+                        ( a.belong_org_code != a.dp_org_code AND (( dpo.id = #{organizationId} OR ( dpo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ))) )
+                    </when>
+                </choose>
+            </if>
+            <if test="dpOrgCode != null and dpOrgCode != ''">
+                AND a.dp_org_code = #{dpOrgCode}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        ORDER BY a.date DESC, a.teller_code, dp_category_id
+    </select>
+
+    <!-- 分页获取有任务分成的员工号 -->
+    <select id="findTaskEmployeePageCount" parameterType="org.nmgns.bps.cktj.entity.Deposit" resultType="java.lang.Long">
+        select count(*)
+        from (
+                select teller_code from bps_78000.t_cktj_employee_deposit_task_detail a
+                <where>
+                    <if test="dpOrgCode != null and dpOrgCode != ''">
+                        AND a.dp_org_code = #{dpOrgCode}
+                    </if>
+                    <if test="tellerCode != null and tellerCode != ''">
+                        AND a.teller_code = #{tellerCode}
+                    </if>
+                    <if test="tellerName != null and tellerName != ''">
+                        AND u.name = #{tellerName}
+                    </if>
+                    <if test="startDate != null">
+                        <![CDATA[ AND a.date >= #{startDate} ]]>
+                    </if>
+                    <if test="endDate != null">
+                        <![CDATA[ AND a.date <= #{endDate} ]]>
+                    </if>
+                    <!-- 数据范围过滤 -->
+                    ${sqlMap.dsf}
+                </where>
+                GROUP BY teller_code
+             ) t
+    </select>
+
+    <!-- 分页获取有任务分成的员工号 -->
+    <select id="findTaskEmployeePage" parameterType="org.nmgns.bps.cktj.entity.Deposit" resultType="java.lang.String">
+        select teller_code from bps_78000.t_cktj_employee_deposit_task_detail a
+        <where>
+            <if test="dpOrgCode != null and dpOrgCode != ''">
+                AND a.dp_org_code = #{dpOrgCode}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+            GROUP BY teller_code
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY teller_code DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+
+
+</mapper>

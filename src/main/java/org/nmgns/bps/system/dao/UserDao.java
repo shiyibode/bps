@@ -6,6 +6,7 @@ import org.nmgns.bps.system.entity.User;
 import org.nmgns.bps.system.entity.UserOrganization;
 import org.nmgns.bps.system.entity.UserStatus;
 
+import java.util.Date;
 import java.util.List;
 
 @Mapper
@@ -46,5 +47,7 @@ public interface UserDao {
     public void updateUserStatusById(UserStatus us);
 
     public List<User> getTenUsers(User user);
+
+    public Date getMaxDepositCurrDate();
 
 }
