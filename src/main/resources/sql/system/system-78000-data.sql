@@ -47,43 +47,52 @@ INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, ta
 INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, locale, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (38, 2, '{0,1,2}', '角色权限', 'MENU_TYPE_MENU_MENU', '/sys/permission', 'menu.sys.permission', 'syspermission', 38, '1', 'sys:permission', 'x-fa fa-key', 1, now(), 1, now(), '角色权限管理', false);
 INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (39, 38, '{0,1,2,38}', '删除', 'MENU_TYPE_MENU_PERMISSION', '/sys/permission/delete', 'deletePermission', 39, '1', 'sys:permission:delete', 'x-fa fa-trash', 1, now(), 1, now(), '删除接口', false);
 INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (40, 38, '{0,1,2,38}', '编辑', 'MENU_TYPE_MENU_PERMISSION', '/sys/permission/update', 'editPermission', 40, '1', 'sys:permission:update', 'x-fa fa-edit', 1, now(), 1, now(), '编辑接口', false);
+
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (41, 3, '{0,1,2,3}', '绑定至角色', 'MENU_TYPE_MENU_PERMISSION', '', 'bingToRole', 41, '1', '', 'x-fa fa-plus-square', 1, now(), 1, now(), '绑定菜单至角色', false);
+
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, locale, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (42, 2, '{0,1,2}', '角色菜单', 'MENU_TYPE_MENU_MENU', '/sys/rolemenu', 'menu.sys.rolemenu', 'sysrolemenu', 42, '1', '', 'x-fa fa-pencil-ruler', 1, now(), 1, now(), '角色菜单管理', false);
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (43, 42, '{0,1,2,42}', '删除', 'MENU_TYPE_MENU_PERMISSION', '/sys/rolemenu/delete', 'deleteRoleMenu', 43, '1', '', 'x-fa fa-trash', 1, now(), 1, now(), '删除角色和菜单的关联关系', false);
 ALTER SEQUENCE bps_78000.t_sys_menu_id_seq RESTART WITH 41;
 update bps_78000.t_sys_menu  set del_flag = true where name in ('查看','打印','导出'); -- 初始不显示这3个菜单，预留以后使用
 
 
 -- 初始接口列表
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取模块列表（模块也是菜单）','/sys/menu/menugroups','sys:menu:menugroups','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取全部菜单，分页返回','/sys/menu/get','sys:menu:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('新增菜单','/sys/menu/create','sys:menu:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改菜单','/sys/menu/update','sys:menu:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('删除菜单','/sys/menu/delete','sys:menu:delete','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('用户在当前菜单下具有的操作按钮','/sys/menu/currentUser/currentMenuPermission','sys:menu:currentuser:currentmenupermission','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取机构列表，分页返回','/sys/organization/get','sys:organization:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取界面中显示的机构树列表','/sys/organization/getOrganizationTree','sys:organization:getorganizationtree','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('新增机构','/sys/organization/create','sys:organization:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改机构','/sys/organization/update','sys:organization:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('删除机构','/sys/organization/delete','sys:organization:delete','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取角色列表','/sys/role/get','sys:role:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('创建角色','/sys/role/create','sys:role:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改角色','/sys/role/update','sys:role:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('删除角色','/sys/role/delete','sys:role:delete','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取最多10个角色，用于设置角色对应的接口时，获取角色列表','/sys/role/getTenRoles','sys:role:gettenroles','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取api列表','/sys/api/get','sys:api:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('创建api','/sys/api/create','sys:api:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改api','/sys/api/update','sys:api:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('删除api','/sys/api/delete','sys:api:delete','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取角色接口关联关系，分页返回','/sys/permission/get','sys:permission:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('给角色赋予接口','/sys/permission/create','sys:permission:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改角色拥有的接口的数据范围','/sys/permission/update','sys:permission:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('取消角色拥有的接口','/sys/permission/delete','sys:permission:delete','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改用户密码','/sys/user/updatePassword','sys:user:updatepassword','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('重置用户密码','/sys/user/resetPassword','sys:user:resetpassword','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改用户在职机构','/sys/user/updateOrganization','sys:user:updateorganization','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改用户拥有的角色','/sys/user/updateRole','sys:user:updaterole','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取用户列表，分页返回','/sys/user/get','sys:user:get','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('创建用户','/sys/user/create','sys:user:create','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('修改用户','/sys/user/update','sys:user:update','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('删除用户','/sys/user/delete','sys:user:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(1,'获取模块列表（模块也是菜单）','/sys/menu/menugroups','sys:menu:menugroups','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(2,'获取全部菜单，分页返回','/sys/menu/get','sys:menu:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(3,'新增菜单','/sys/menu/create','sys:menu:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(4,'修改菜单','/sys/menu/update','sys:menu:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(5,'删除菜单','/sys/menu/delete','sys:menu:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(6,'用户在当前菜单下具有的操作按钮','/sys/menu/currentUser/currentMenuPermission','sys:menu:currentuser:currentmenupermission','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(7,'获取机构列表，分页返回','/sys/organization/get','sys:organization:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(8,'获取界面中显示的机构树列表','/sys/organization/getOrganizationTree','sys:organization:getorganizationtree','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(9,'新增机构','/sys/organization/create','sys:organization:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(10,'修改机构','/sys/organization/update','sys:organization:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(11,'删除机构','/sys/organization/delete','sys:organization:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(12,'获取角色列表','/sys/role/get','sys:role:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(13,'创建角色','/sys/role/create','sys:role:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(14,'修改角色','/sys/role/update','sys:role:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(15,'删除角色','/sys/role/delete','sys:role:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(16,'获取api列表','/sys/api/get','sys:api:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(17,'创建api','/sys/api/create','sys:api:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(18,'修改api','/sys/api/update','sys:api:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(19,'删除api','/sys/api/delete','sys:api:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(20,'按明细设置用户角色的数据范围','/sys/permission/custom','sys:permission:custom','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(21,'获取角色接口关联关系，分页返回','/sys/permission/get','sys:permission:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(22,'给角色赋予接口','/sys/permission/create','sys:permission:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(23,'修改角色拥有的接口的数据范围','/sys/permission/update','sys:permission:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(24,'取消角色拥有的接口','/sys/permission/delete','sys:permission:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(25,'修改用户密码','/sys/user/updatePassword','sys:user:updatepassword','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(26,'重置用户密码','/sys/user/resetPassword','sys:user:resetpassword','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(27,'修改用户在职机构','/sys/user/updateOrganization','sys:user:updateorganization','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(28,'修改用户拥有的角色','/sys/user/updateRole','sys:user:updaterole','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(29,'获取用户列表，分页返回','/sys/user/get','sys:user:get','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(30,'创建用户','/sys/user/create','sys:user:create','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(31,'修改用户','/sys/user/update','sys:user:update','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(32,'删除用户','/sys/user/delete','sys:user:delete','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(33,'获取最多10个角色，用于设置角色对应的接口时，获取角色列表','/sys/role/getTenRoles','sys:role:gettenroles','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(34,'绑定菜单至角色','/sys/role/bindMenuToRole','sys:role:bindmenutorole','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(35,'获取角色绑定的菜单列表','/sys/role/getRoleMenu','sys:role:getrolemenu','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(36,'删除角色绑定的菜单','/sys/role/deleteRoleMenu','sys:role:deleterolemenu','手工写入权限',1,now(),1,now());
 
 
 
@@ -131,6 +140,9 @@ INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 31, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 32, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 33, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 34, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 35, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 36, 'DATA_SCOPE_ALL', now(), 1);
 
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,1,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,2,true);
@@ -172,6 +184,9 @@ INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,37,tr
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,38,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,39,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,40,true);
+INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,41,true);
+INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,42,true);
+INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,43,true);
 
 
 INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, post, login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(3,'103390', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '石伊波', null, null, null, null, null, null, '2025-01-01', 'USER_POST_SUBBRANCH_DEPARTMENT_EMPLOYEE', true, null, false, 1, now(), null, null, null, null, false);

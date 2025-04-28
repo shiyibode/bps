@@ -81,6 +81,7 @@ COMMENT ON COLUMN bps_78000.t_sys_role.del_flag IS '删除标志';
 DROP TABLE if exists bps_78000.t_sys_role_menu;
 CREATE TABLE bps_78000.t_sys_role_menu
 (
+    id bigserial,
     role_id BIGINT NOT NULL,
     menu_id BIGINT NOT NULL,
     is_show BOOLEAN DEFAULT TRUE NOT NULL,

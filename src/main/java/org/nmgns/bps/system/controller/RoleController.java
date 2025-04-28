@@ -1,8 +1,10 @@
 package org.nmgns.bps.system.controller;
 
 import org.nmgns.bps.system.entity.Role;
+import org.nmgns.bps.system.entity.RoleMenu;
 import org.nmgns.bps.system.service.RoleService;
 import org.nmgns.bps.system.utils.PageData;
+import org.nmgns.bps.system.utils.base.Page;
 import org.nmgns.bps.system.utils.base.ResponseJson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -97,6 +99,56 @@ public class RoleController {
             responseJson.setData(roleList);
             responseJson.setSuccess(true);
             responseJson.setMsg("获取角色列表成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:role:bindmenutorole')")
+    @RequestMapping("/bindMenuToRole")
+    public ResponseJson bindMenuToRole(@RequestParam(name = "menuId") Long menuId, @RequestParam(name = "roleId") Long roleId){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            roleService.bindMenuToRole(menuId, roleId);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("菜单绑定角色成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:role:getrolemenu')")
+    @RequestMapping("/getRoleMenu")
+    public ResponseJson getRoleMenu(@RequestBody RoleMenu roleMenu) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<RoleMenu> pageData = roleService.getRoleMenuListPage(roleMenu);
+            responseJson.setTotal(pageData.getTotal());
+            responseJson.setData(pageData.getList());
+            responseJson.setSuccess(Boolean.TRUE);
+            responseJson.setMsg("获取菜单绑定角色成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:role:deleterolemenu')")
+    @RequestMapping("/deleteRoleMenu")
+    public ResponseJson deleteRoleMenu(@RequestBody RoleMenu roleMenu) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            roleService.deleteRoleMenu(roleMenu.getId());
+            responseJson.setSuccess(true);
+            responseJson.setMsg("菜单角色关联关系已取消");
         } catch (Exception e) {
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());

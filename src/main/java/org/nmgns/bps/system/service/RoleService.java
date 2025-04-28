@@ -3,6 +3,7 @@ package org.nmgns.bps.system.service;
 import cn.hutool.core.util.StrUtil;
 import org.nmgns.bps.system.dao.DictionaryDao;
 import org.nmgns.bps.system.dao.LogDao;
+import org.nmgns.bps.system.dao.MenuDao;
 import org.nmgns.bps.system.dao.RoleDao;
 import org.nmgns.bps.system.entity.*;
 import org.nmgns.bps.system.utils.DefaultConfig;
@@ -29,6 +30,8 @@ public class RoleService {
     private LogDao logDao;
     @Autowired
     private DictionaryService dictionaryService;
+    @Autowired
+    private MenuDao menuDao;
 
 
     /**
@@ -267,6 +270,54 @@ public class RoleService {
         Role tmpRole = new Role();
         tmpRole.setName(name);
         return roleDao.getTenRoles(tmpRole);
+    }
+
+    /**
+     * 绑定菜单至角色
+     * @param menuId 菜单id
+     * @param roleId 角色id
+     */
+    public void bindMenuToRole(Long menuId, Long roleId) throws RuntimeException{
+        if (null == menuId || null == roleId) throw new RuntimeException("参数未提供给");
+
+        Menu menu = menuDao.getMenuById(menuId);
+        if(null == menu || menu.getId() == null) throw new RuntimeException("菜单不存在");
+
+        Role role = roleDao.getRoleById(roleId);
+        if (null == role || role.getId() == null) throw new RuntimeException("角色不存在");
+
+        RoleMenu roleMenu = new RoleMenu();
+        roleMenu.setRole(role);
+        roleMenu.setMenu(menu);
+        roleMenu.setIsShow(true);
+
+        roleDao.insertRoleMenu(roleMenu);
+    }
+
+    /**
+     * 分页获取角色菜单关联列表
+     * @param roleMenu 参数信息，必须包含分页pageNo
+     */
+    public PageData<RoleMenu> getRoleMenuListPage(RoleMenu roleMenu) throws RuntimeException{
+        if (roleMenu == null || roleMenu.getPage() == null) throw new RuntimeException("获取角色菜单关联信息失败");
+
+        //设置分页信息
+        roleMenu.setPage(new Page(roleMenu.getPageNo(), DefaultConfig.DEFAULT_PAGE_SIZE));
+        Long roleMenuListCount = roleDao.getRoleMenuListCount(roleMenu);
+        List<RoleMenu> roleMenuList = roleDao.getRoleMenuList(roleMenu);
+
+        PageData<RoleMenu> roleMenuPageData = new PageData<>();
+        roleMenuPageData.setList(roleMenuList);
+        roleMenuPageData.setTotal(roleMenuListCount);
+        roleMenuPageData.setPageNo(roleMenu.getPageNo());
+        roleMenuPageData.setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
+
+        return roleMenuPageData;
+    }
+
+    public void deleteRoleMenu(Long id){
+        if (null == id) throw new RuntimeException("未提供参数");
+        roleDao.deleteRoleMenuById(id);
     }
 
 

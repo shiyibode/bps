@@ -31,6 +31,8 @@ public class MenuService {
     private UserUtils userUtils;
     @Autowired
     private DictionaryService dictionaryService;
+    @Autowired
+    private RoleDao roleDao;
 
     /**
      * 获取用户拥有的所有菜单
@@ -125,6 +127,8 @@ public class MenuService {
 
         menu.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         menu.setCreateTime(new Date());
+        menu.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+        menu.setUpdateTime(new Date());
         menuDao.insert(menu);
 
         //写入日志
@@ -160,7 +164,17 @@ public class MenuService {
         if (menuId == null ) throw new RuntimeException("删除菜单信息时未提供参数");
         Menu dbMenu = menuDao.getMenuById(menuId);
 
+        if (null == dbMenu) throw new RuntimeException("菜单不存在");
+
+        // 如果菜单关联了角色，则报错，提示用户先删除关联关系
+        List<RoleMenu> roleMenuList = roleDao.getRoleMenuByMenuId(menuId);
+        if (!roleMenuList.isEmpty()) throw new RuntimeException("菜单存在关联角色，请先删除菜单角色关联关系");
+
+        // 删除本菜单
         menuDao.delete(menuId);
+
+        // 删除所有子菜单
+        menuDao.deleteChildMenuById(menuId);
 
         //写入日志
         Log log = new Log("SCCD", "删除菜单-"+dbMenu.getName(), new Date(), userUtils.getCurrentLoginedUser().getId());
@@ -178,7 +192,19 @@ public class MenuService {
 
         //将类型是“按钮”的菜单筛选后返回
         if (dbMenu.getType().equals(DefaultConfig.MENU_TYPE_MENU_MENU)){
-            List<Menu> childPermissionMenu = menuDao.getLowerLevelMenuById(dbMenu.getId());
+            List<Menu> childPermissionMenuList = menuDao.getLowerLevelMenuById(dbMenu.getId());
+            List<Menu> childPermissionMenu = new ArrayList<>();
+
+            // 过滤权限-判断用户是否拥有该按钮
+            List<Menu> menuList = menuDao.getMenuListByUserId(userUtils.getCurrentLoginedUser().getId());
+            for (Menu menu : childPermissionMenuList){
+                for (Menu m: menuList){
+                    if(menu.getId().equals(m.getId())){
+                        childPermissionMenu.add(menu);
+                    }
+                }
+            }
+
             List<TreeMenu> childPermissionList = new ArrayList<>();
             for (Menu childMenu : childPermissionMenu){
                 if (childMenu.getType().equals(DefaultConfig.MENU_TYPE_MENU_PERMISSION)){

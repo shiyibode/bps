@@ -58,4 +58,13 @@ public interface RoleDao {
 
     public List<Role> getTenRoles(Role role);
 
+    public void insertRoleMenu(RoleMenu roleMenu);
+
+    public void deleteRoleMenuById(Long id);
+
+    public List<RoleMenu> getRoleMenuByMenuId(Long menuId);
+
+    public Long getRoleMenuListCount(RoleMenu roleMenu);
+
+    public List<RoleMenu> getRoleMenuList(RoleMenu roleMenu);
 }

@@ -29,4 +29,6 @@ public interface MenuDao {
 
     public List<Menu> getLowerLevelMenuById(Long menuId);
 
+    public void deleteChildMenuById(Long menuId);
+
 }

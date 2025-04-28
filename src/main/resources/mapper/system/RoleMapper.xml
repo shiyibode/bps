@@ -343,4 +343,118 @@
         ORDER BY r.id LIMIT 10
     </select>
 
+    <insert id="insertRoleMenu" parameterType="org.nmgns.bps.system.entity.RoleMenu">
+        INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show)
+        VALUES (
+                #{role.id},
+                #{menu.id},
+                #{isShow}
+               )
+    </insert>
+
+    <delete id="deleteRoleMenuById" parameterType="java.lang.Long">
+        delete from bps_78000.t_sys_role_menu where id = #{id}
+    </delete>
+
+    <select id="getRoleMenuByMenuId" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.RoleMenu">
+        select role_id,menu_id,is_show
+        from bps_78000.t_sys_role_menu where menu_id = #{menuId}
+    </select>
+
+    <resultMap id="roleMenuResultMap" type="org.nmgns.bps.system.entity.RoleMenu">
+        <id property="id" column="id"/>
+        <result property="isShow" column="is_show" />
+        <association property="role" javaType="org.nmgns.bps.system.entity.Role">
+            <id property="id" column="role_id"/>
+            <result property="name" column="role_name"/>
+            <result property="enName" column="role_en_name"/>
+            <result property="roleType" column="role_role_type"/>
+            <result property="isSys" column="role_is_sys"/>
+            <result property="usable" column="role_usable"/>
+            <result property="createBy" column="role_create_by"/>
+            <result property="createTime" column="role_create_time"/>
+        </association>
+        <association property="menu" javaType="org.nmgns.bps.system.entity.Menu">
+            <id property="id" column="menu_id"/>
+            <result property="name" column="menu_name"/>
+            <result property="parentId" column="menu_parent_id"/>
+            <result property="parentIds" column="menu_parent_ids"/>
+            <result property="sort" column="menu_sort"/>
+            <result property="target" column="menu_target"/>
+            <result property="icon" column="menu_icon"/>
+            <result property="isShow" column="menu_is_show"/>
+            <result property="delFlag" column="menu_del_flag"/>
+            <result property="remarks" column="menu_remarks"/>
+            <result property="description" column="menu_description"/>
+            <result property="createBy" column="menu_create_by"/>
+            <result property="createTime" column="menu_create_time"/>
+        </association>
+    </resultMap>
+
+    <select id="getRoleMenuListCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.system.entity.RoleMenu">
+        select count(*)
+        from
+            bps_78000.t_sys_role_menu rm
+                join bps_78000.t_sys_role r on rm.role_id = r.id and r.del_flag = false
+                join bps_78000.t_sys_menu m on rm.menu_id = m.id and m.del_flag = false
+        <where>
+            <if test="role.name != null and role.name != ''">
+                r.name LIKE '%'||#{role.name}||'%'
+            </if>
+            <if test="menu.name != null and menu.name != ''">
+                m.name LIKE '%'||#{menu.name}||'%'
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页获取全部的roleApi列表 -->
+    <select id="getRoleMenuList" resultMap="roleMenuResultMap" parameterType="org.nmgns.bps.system.entity.RoleMenu">
+        select
+            rm.id,
+            rm.is_show,
+            r.name as role_name,
+            r.en_name as role_en_name,
+            r.role_type as role_role_type,
+            r.is_sys as role_is_sys,
+            r.usable as role_usable,
+            r.create_by as role_create_by,
+            r.create_time as role_create_time,
+            rm.menu_id,
+            m.name as menu_name,
+            m.parent_id as menu_parent_id,
+            m.parent_ids as menu_parent_ids,
+            m.sort as menu_sort,
+            m.target as menu_target,
+            m.icon as menu_icon,
+            m.is_show as menu_is_show,
+            m.del_flag as menu_del_flag,
+            m.description as menu_description,
+            m.remarks as menu_remarks,
+            m.create_by as menu_create_by,
+            m.create_time as menu_create_time
+        from
+            bps_78000.t_sys_role_menu rm
+            join bps_78000.t_sys_role r on rm.role_id = r.id and r.del_flag = false
+            join bps_78000.t_sys_menu m on rm.menu_id = m.id and m.del_flag = false
+        <where>
+            <if test="role.name != null and role.name != ''">
+                r.name LIKE '%'||#{role.name}||'%'
+            </if>
+            <if test="menu.name != null and menu.name != ''">
+                m.name LIKE '%'||#{menu.name}||'%'
+            </if>
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY rm.id ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
 </mapper>
