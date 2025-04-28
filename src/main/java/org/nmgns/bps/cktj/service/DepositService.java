@@ -1,11 +1,11 @@
 package org.nmgns.bps.cktj.service;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.nmgns.bps.cktj.dao.DepositDao;
 import org.nmgns.bps.cktj.entity.Deposit;
-import org.nmgns.bps.cktj.entity.EmployeeAccount;
-import org.nmgns.bps.system.dao.UserDao;
-import org.nmgns.bps.system.entity.User;
+import org.nmgns.bps.cktj.utils.ExcelExportUtils;
 import org.nmgns.bps.system.entity.UserOrganization;
 import org.nmgns.bps.system.service.ApiService;
 import org.nmgns.bps.system.utils.DataScopeUtils;
@@ -15,8 +15,7 @@ import org.nmgns.bps.system.utils.UserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class DepositService {
@@ -29,9 +28,119 @@ public class DepositService {
     private UserUtils userUtils;
 
     /**
-     * 员工时点
+     * 员工任务时点
      */
-    public PageData<Deposit> findEmployeeDepositList(Deposit deposit) {
+    public PageData<Deposit> findEmployeeTaskDepositList(Deposit deposit) {
+        if (deposit == null || deposit.getPage() == null ) throw new RuntimeException("未提供参数");
+        PageData<Deposit> depositPageData = new PageData<>();
+
+        //设置默认机构为当前用户的在职机构
+        if(deposit.getOrganizationId() == null){
+            UserOrganization currentUserOrganization = userUtils.getCurrentUserOrganization();
+            deposit.setOrganizationId(currentUserOrganization.getId());
+        }
+
+        // 设置默认的存款类型为“核心系统存款”
+        if (StrUtil.isBlank(deposit.getDepositType())) {
+            deposit.setDepositType("DEPOSIT_TYPE_ACCOUNTING_WAY");
+        }
+
+        // 如果前端未设置时间，则设置默认日期
+        if (deposit.getDate() == null ){
+            deposit.setStartDate(userUtils.getMaxDepositCurrDate());
+            deposit.setEndDate(deposit.getStartDate());
+        }
+
+        if (deposit.getDepositType().equals("DEPOSIT_TYPE_ACCOUNTING_WAY")) {
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo", "u"));     //核心系统存款
+        } else {
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo,blo", "u")); //汇总或调离或调入存款
+        }
+
+        //分页获取员工列表以及员工总数
+        deposit.getPage().setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
+        List<String> tellerList = depositDao.findTaskEmployeePage(deposit);
+        Long total = depositDao.findTaskEmployeePageCount(deposit);
+
+        //获取员工对应的分成信息列表
+        List<Deposit> tellerDepositList = new ArrayList<>();
+        for (String tellerCode : tellerList){
+            deposit.setTellerCode(tellerCode);
+             tellerDepositList.addAll(depositDao.findEmployeeDepositList(deposit));
+        }
+
+        depositPageData.setTotal(total);
+        depositPageData.setList(tellerDepositList);
+
+        return depositPageData;
+    }
+
+    /**
+     * 导出员工任务时点数
+     */
+    public void exportEmpDepositTask(HttpServletResponse response, Deposit deposit) throws Exception {
+
+        //设置默认机构为当前用户的在职机构
+        if(deposit.getOrganizationId() == null){
+            UserOrganization currentUserOrganization = userUtils.getCurrentUserOrganization();
+            deposit.setOrganizationId(currentUserOrganization.getId());
+        }
+
+        // 设置默认的存款类型为“核心系统存款”
+        if (StrUtil.isBlank(deposit.getDepositType())) {
+            deposit.setDepositType("DEPOSIT_TYPE_ACCOUNTING_WAY");
+        }
+
+        // 如果前端未设置时间，则设置默认日期
+        if (deposit.getDate() == null ){
+            deposit.setStartDate(userUtils.getMaxDepositCurrDate());
+            deposit.setEndDate(deposit.getStartDate());
+        }
+
+        // 导出excel时，导出全部员工的任务完成数
+        deposit.setPage(null);
+        List<String> tellerList = depositDao.findTaskEmployeePage(deposit);
+
+        if (deposit.getDepositType().equals("DEPOSIT_TYPE_ACCOUNTING_WAY")) {
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo", "u"));     //核心系统存款
+        } else {
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo,blo", "u")); //汇总或调离或调入存款
+        }
+
+        //获取员工对应的分成信息列表
+        List<Deposit> tellerDepositList = new ArrayList<>();
+        for (String tellerCode : tellerList){
+            deposit.setTellerCode(tellerCode);
+            tellerDepositList.addAll(depositDao.findEmployeeDepositList(deposit));
+        }
+
+
+        List<Map<String,Object>> data = new ArrayList<>();
+        for (int i=0;i<tellerDepositList.size();i++){
+            Deposit d = tellerDepositList.get(i);
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("在职机构",d.getTellerOrgName());
+            map.put("在职机构号",d.getTellerOrgCode());
+            map.put("员工姓名",d.getTellerName());
+            map.put("存款所在会计机构",d.getDpOrgCode());
+            map.put("存款上级分类",d.getParentCategoryName());
+            map.put("存款分类",d.getDpCategoryName());
+            map.put("金额",d.getBalance());
+            map.put("累计付息",d.getTtlPayInt());
+            map.put("当日付息",d.getDayPayInt());
+
+            data.add(map);
+        }
+
+
+        ExcelExportUtils.exportExcel(response, data, "员工存款任务时点数-"+ DateUtil.formatDate(deposit.getDate()), 9);
+
+    }
+
+    /**
+     * 员工任务日均
+     */
+    public PageData<Deposit> findEmployeeTaskDepositAvgList(Deposit deposit) {
         if (deposit == null || deposit.getPage() == null ) throw new RuntimeException("未提供参数");
         PageData<Deposit> depositPageData = new PageData<>();
 
@@ -67,7 +176,7 @@ public class DepositService {
         List<Deposit> tellerDepositList = new ArrayList<>();
         for (String tellerCode : tellerList){
             deposit.setTellerCode(tellerCode);
-             tellerDepositList.addAll(depositDao.findEmployeeDepositList(deposit));
+            tellerDepositList.addAll(depositDao.findEmployeeDepositList(deposit));
         }
 
         depositPageData.setTotal(total);

@@ -1,14 +1,15 @@
 package org.nmgns.bps.cktj.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.nmgns.bps.cktj.entity.Deposit;
 import org.nmgns.bps.cktj.service.DepositService;
 import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping("/cktj/deposit")
@@ -27,7 +28,7 @@ public class DepositController {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            PageData<Deposit> depositPageData = depositService.findEmployeeDepositList(deposit);
+            PageData<Deposit> depositPageData = depositService.findEmployeeTaskDepositList(deposit);
             responseJson.setSuccess(true);
             responseJson.setData(depositPageData.getList());
             responseJson.setTotal(depositPageData.getTotal());
@@ -39,6 +40,26 @@ public class DepositController {
         }
 
         return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('cktj:deposit:exportempdeposittask')")
+    @RequestMapping(value = "/exportempdeposittask")
+    public void exportEmpDepositTask(HttpServletResponse response,
+                                     @RequestParam(value = "date",required = false) Date date,
+                                     @RequestParam(value = "organizationId",required = false) Long organizationId,
+                                     @RequestParam(value = "depositType",required = false) String depositType) {
+
+        try {
+            Deposit deposit = new Deposit();
+            deposit.setDate(date);
+            deposit.setOrganizationId(organizationId);
+            deposit.setDepositType(depositType);
+            depositService.exportEmpDepositTask(response, deposit);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 
