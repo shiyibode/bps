@@ -82,7 +82,7 @@ public class RoleApiController {
      */
     @RequestMapping("/delete")
     @PreAuthorize("hasAuthority('sys:permission:delete')")
-    public ResponseJson deleteRoleApi(@RequestParam("roleApiId") Long roleApiId) {
+    public ResponseJson deleteRoleApi(@RequestParam("id") Long roleApiId) {
         ResponseJson responseJson = new ResponseJson();
 
         try {

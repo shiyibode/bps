@@ -46,13 +46,11 @@ INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, ta
 
 INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, locale, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (38, 2, '{0,1,2}', '角色权限', 'MENU_TYPE_MENU_MENU', '/sys/permission', 'menu.sys.permission', 'syspermission', 38, '1', 'sys:permission', 'x-fa fa-key', 1, now(), 1, now(), '角色权限管理', false);
 INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (39, 38, '{0,1,2,38}', '删除', 'MENU_TYPE_MENU_PERMISSION', '/sys/permission/delete', 'deletePermission', 39, '1', 'sys:permission:delete', 'x-fa fa-trash', 1, now(), 1, now(), '删除接口', false);
-INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (40, 38, '{0,1,2,38}', '编辑', 'MENU_TYPE_MENU_PERMISSION', '/sys/permission/update', 'editPermission', 40, '1', 'sys:permission:update', 'x-fa fa-edit', 1, now(), 1, now(), '编辑接口', false);
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (40, 3, '{0,1,2,3}', '绑定至角色', 'MENU_TYPE_MENU_PERMISSION', '', 'bindToRole', 40, '1', '', 'x-fa fa-plus-square', 1, now(), 1, now(), '绑定菜单至角色', false);
 
-INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (41, 3, '{0,1,2,3}', '绑定至角色', 'MENU_TYPE_MENU_PERMISSION', '', 'bingToRole', 41, '1', '', 'x-fa fa-plus-square', 1, now(), 1, now(), '绑定菜单至角色', false);
-
-INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, locale, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (42, 2, '{0,1,2}', '角色菜单', 'MENU_TYPE_MENU_MENU', '/sys/rolemenu', 'menu.sys.rolemenu', 'sysrolemenu', 42, '1', '', 'x-fa fa-pencil-ruler', 1, now(), 1, now(), '角色菜单管理', false);
-INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (43, 42, '{0,1,2,42}', '删除', 'MENU_TYPE_MENU_PERMISSION', '/sys/rolemenu/delete', 'deleteRoleMenu', 43, '1', '', 'x-fa fa-trash', 1, now(), 1, now(), '删除角色和菜单的关联关系', false);
-ALTER SEQUENCE bps_78000.t_sys_menu_id_seq RESTART WITH 41;
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, locale, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (41, 2, '{0,1,2}', '角色菜单', 'MENU_TYPE_MENU_MENU', '/sys/rolemenu', 'menu.sys.rolemenu', 'sysrolemenu', 41, '1', '', 'x-fa fa-pencil-ruler', 1, now(), 1, now(), '角色菜单管理', false);
+INSERT INTO bps_78000.t_sys_menu (id, parent_id, parent_ids, name, type, uri, target, sort, is_show, permission, icon, create_by, create_time, update_by, update_time, description, del_flag) VALUES (42, 41, '{0,1,2,41}', '删除', 'MENU_TYPE_MENU_PERMISSION', '/sys/rolemenu/delete', 'deleteRoleMenu', 42, '1', '', 'x-fa fa-trash', 1, now(), 1, now(), '删除角色和菜单的关联关系', false);
+ALTER SEQUENCE bps_78000.t_sys_menu_id_seq RESTART WITH 43;
 update bps_78000.t_sys_menu  set del_flag = true where name in ('查看','打印','导出'); -- 初始不显示这3个菜单，预留以后使用
 
 
@@ -186,7 +184,6 @@ INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,39,tr
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,40,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,41,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,42,true);
-INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,43,true);
 
 
 INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, post, login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(3,'103390', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '石伊波', null, null, null, null, null, null, '2025-01-01', 'USER_POST_SUBBRANCH_DEPARTMENT_EMPLOYEE', true, null, false, 1, now(), null, null, null, null, false);

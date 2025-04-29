@@ -16,8 +16,6 @@ public class RoleApi extends BasePageEntity<RoleApi> {
     private String dataScopeStr;
 
     //以下属性用来搜素
-    private String roleName;
-    private String apiName;
     private List<Organization> organizationList;
 
     public List<Long> getOrganizationIdList(){
@@ -54,9 +52,19 @@ public class RoleApi extends BasePageEntity<RoleApi> {
         return null;
     }
 
+    public void setRoleName(String roleName){
+        if(null == role) role = new Role();
+        role.setName(roleName);
+    }
+
     public String getApiName(){
         if (null != api) return api.getName();
         return null;
+    }
+
+    public void setApiName(String apiName){
+        if(null == api) api = new Api();
+        api.setName(apiName);
     }
 
     public void setApiId(Long apiId){

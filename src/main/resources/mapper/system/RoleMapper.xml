@@ -260,6 +260,14 @@
         bps_78000.t_sys_role_permission rp
         join bps_78000.t_sys_role r on rp.role_id = r.id and r.del_flag = false
         join bps_78000.t_sys_api a on rp.api_id = a.id
+        <where>
+            <if test="role != null and role.name != null and role.name != '' ">
+                r.name LIKE '%'||#{role.name}||'%'
+            </if>
+            <if test="api != null and api.name != null and api.name != '' ">
+                a.name LIKE '%'||#{api.name}||'%'
+            </if>
+        </where>
     </select>
 
     <!-- 分页获取全部的roleApi列表 -->
@@ -294,6 +302,14 @@
         join bps_78000.t_sys_api a on rp.api_id = a.id
         left join bps_78000.t_sys_role_permission_organization rpo on rp.id = rpo.role_permission_id
         LEFT JOIN public.t_sys_organization o on rpo.organization_id = o.id
+        <where>
+            <if test="role != null and role.name != null and role.name != '' ">
+                r.name LIKE '%'||#{role.name}||'%'
+            </if>
+            <if test="api != null and api.name != null and api.name != '' ">
+                a.name LIKE '%'||#{api.name}||'%'
+            </if>
+        </where>
         <choose>
             <when test="page !=null and page.orderBy != null and page.orderBy != ''">
                 ORDER BY ${page.orderBy}
