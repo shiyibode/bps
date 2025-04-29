@@ -91,6 +91,7 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(34,'绑定菜单至角色','/sys/role/bindMenuToRole','sys:role:bindmenutorole','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(35,'获取角色绑定的菜单列表','/sys/role/getRoleMenu','sys:role:getrolemenu','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(36,'删除角色绑定的菜单','/sys/role/deleteRoleMenu','sys:role:deleterolemenu','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(37,'获取机构类型列表','/sys/organization/getOrganizationTypeList','sys:organization:getorganizationtypelist','手工写入权限',1,now(),1,now());
 
 
 
@@ -141,6 +142,7 @@ INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 34, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 35, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 36, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 37, 'DATA_SCOPE_ALL', now(), 1);
 
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,1,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,2,true);

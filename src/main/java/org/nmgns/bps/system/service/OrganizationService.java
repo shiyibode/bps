@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import org.nmgns.bps.system.dao.*;
 import org.nmgns.bps.system.entity.*;
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.utils.*;
 import org.nmgns.bps.system.utils.base.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,13 +95,13 @@ public class OrganizationService {
 
         //上级机构和其类型匹配
         if (dictionaryService.getDictionaryByCode(dbParentOrganization.getType()).getName().equals("总行")){
-            if (dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("中心支行") || dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("总行部门")) throw new RuntimeException("机构类型不符");
+            if (!dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("中心支行") && dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("总行部门")) throw new RuntimeException("机构类型不符");
         }
         if (dictionaryService.getDictionaryByCode(dbParentOrganization.getType()).getName().equals("中心支行")){
-            if (dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("中心支行部门") || dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("支行")) throw new RuntimeException("机构类型不符");
+            if (!dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("中心支行部门") && dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("支行")) throw new RuntimeException("机构类型不符");
         }
         if (dictionaryService.getDictionaryByCode(dbParentOrganization.getType()).getName().equals("支行")){
-            if (dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("支行部门") || dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("网点")) throw new RuntimeException("机构类型不符");
+            if (!dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("支行部门") && !dictionaryService.getDictionaryByCode(organization.getType()).getName().equals("网点")) throw new RuntimeException("机构类型不符");
         }
 
         //默认设置可以使用
@@ -147,7 +148,11 @@ public class OrganizationService {
         if (organizationId == null ) throw new RuntimeException("删除机构信息时未提供参数");
         Organization dbOrganization = organizationDao.getOrganizationById(organizationId);
 
-       organizationDao.delete(organizationId);
+        // 删除本机构、删除所有下级机构
+        List<Organization> orgAndChildOrgList = organizationDao.getOrgAndLowerLevelOrgListById(organizationId);
+        for (Organization org : orgAndChildOrgList){
+            organizationDao.delete(org.getId());
+        }
 
         //写入日志
         Log log = new Log("SCJG", "删除机构-"+dbOrganization.getName(), new Date(), userUtils.getCurrentLoginedUser().getId());
@@ -238,6 +243,13 @@ public class OrganizationService {
         List treeList = TreeEntityUtils.listToTree(treeOrganizationList);
         return treeList;
 
+    }
+
+    /**
+     * 获取机构类型列表
+     */
+    public List<Dictionary> getOrganizationTypeList(){
+        return organizationDao.getOrganizationTypeList();
     }
 
 

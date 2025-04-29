@@ -86,7 +86,7 @@ CREATE TABLE public.t_sys_organization
     id BIGSERIAL PRIMARY KEY NOT NULL,
     parent_id Integer NOT NULL,
     parent_ids Integer[] NOT NULL,
-    code VARCHAR(10),
+    code VARCHAR(10) unique ,
     name VARCHAR(100) NOT NULL,
     sort VARCHAR(10) NOT NULL,
     icon VARCHAR(100),

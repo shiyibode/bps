@@ -1,5 +1,6 @@
 package org.nmgns.bps.system.controller;
 
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.entity.Organization;
 import org.nmgns.bps.system.entity.TreeOrganization;
 import org.nmgns.bps.system.service.OrganizationService;
@@ -99,6 +100,19 @@ public class OrganizationController {
         }catch (Exception e){
             e.printStackTrace();
             return new ArrayList<TreeOrganization>();
+        }
+    }
+
+    /**
+     * 获取机构类型列表（用于新建机构时的机构类型）
+     */
+    @RequestMapping("/getOrganizationTypeList")
+    @PreAuthorize("hasAuthority('sys:organization:getorganizationtypelist')")
+    public List<Dictionary> getOrganizationTypeList() {
+        try {
+            return organizationService.getOrganizationTypeList();
+        }catch (Exception e){
+            return new ArrayList<Dictionary>();
         }
     }
 

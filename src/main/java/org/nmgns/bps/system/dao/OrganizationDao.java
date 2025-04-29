@@ -2,6 +2,7 @@ package org.nmgns.bps.system.dao;
 
 
 import org.apache.ibatis.annotations.Mapper;
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.entity.Organization;
 
 import java.util.List;
@@ -27,4 +28,5 @@ public interface OrganizationDao {
 
     public List<Organization> getUpperLevelOrgListById(Long organizationId);
 
+    public List<Dictionary> getOrganizationTypeList();
 }

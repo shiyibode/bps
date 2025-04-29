@@ -159,7 +159,8 @@
                 #{enName},
                 #{roleType},
                 #{isSys},
-                #{userable},
+                #{usable},
+                #{remarks},
                 #{createBy},
                 #{createTime},
                 #{delFlag}
