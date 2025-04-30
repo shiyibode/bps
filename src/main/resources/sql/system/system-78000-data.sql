@@ -92,6 +92,8 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(35,'获取角色绑定的菜单列表','/sys/role/getRoleMenu','sys:role:getrolemenu','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(36,'删除角色绑定的菜单','/sys/role/deleteRoleMenu','sys:role:deleterolemenu','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(37,'获取机构类型列表','/sys/organization/getOrganizationTypeList','sys:organization:getorganizationtypelist','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(38,'获取用户职位类型列表','/sys/user/getUserPostList','sys:user:getuserpostlist','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(39,'获取用户状态类型列表','/sys/user/getUserStatusList','sys:user:getuserstatuslist','手工写入权限',1,now(),1,now());
 
 
 
@@ -100,9 +102,10 @@ INSERT INTO bps_78000.t_sys_role(id, name, en_name, role_type, is_sys, usable, r
 
 
 
--- 角色
-INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, post, login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(2,'admin_78000', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '伊旗支行管理员', null, null, null, null, null, null, '2025-01-01', 'USER_POST_SUBBRANCH_OPERATOR', true, null, false, 1, now(), null, null, null, null, false);
+-- 用户
+INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(2,'admin_78000', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '伊旗支行管理员', null, null, null, null, null, null, '2025-01-01', true, null, false, 1, now(), null, null, null, null, false);
 INSERT INTO public.t_sys_user_status(user_id, start_date, end_date, status, valid_flag, parent_id, remarks, create_by, create_time) VALUES (2, '2025-01-01', null, 'USER_STATUS_NORMAL', true, null, null, 1, now());
+INSERT INTO public.t_sys_user_post(user_id, start_date, end_date, post, valid_flag, parent_id, remarks, create_by, create_time) VALUES (2, '2025-01-01', null, '''USER_POST_SUBBRANCH_OPERATOR'',', true, null, null, 1, now());
 INSERT INTO public.t_sys_user_organization(user_id, organization_id, start_date, end_date, valid_flag, parent_id, create_by, update_by, update_time) VALUES (2, 2002, '2025-01-01', null, true, null, 1, null, null);
 INSERT INTO bps_78000.t_sys_role(id, name, en_name, role_type, is_sys, usable, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES (1, '支行管理员', 'zhihang_admin', null, false, true, null, 1, now(), null, null, false);
 INSERT INTO bps_78000.t_sys_user_role(user_id, role_id) VALUES (2, 1);
@@ -143,6 +146,8 @@ INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 35, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 36, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 37, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 38, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 39, 'DATA_SCOPE_ALL', now(), 1);
 
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,1,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,2,true);

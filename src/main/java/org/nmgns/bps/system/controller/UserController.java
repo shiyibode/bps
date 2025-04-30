@@ -2,6 +2,8 @@ package org.nmgns.bps.system.controller;
 
 import cn.hutool.json.JSONUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.nmgns.bps.system.entity.Dictionary;
+import org.nmgns.bps.system.entity.Role;
 import org.nmgns.bps.system.entity.User;
 import org.nmgns.bps.system.service.UserService;
 import org.nmgns.bps.system.utils.PageData;
@@ -28,16 +30,16 @@ public class UserController {
 
     /**
      * 修改用户密码
-     * @param id 用户id
+     * @param originalPassword 原始密码
      * @param newLoginPassword 新密码，须大于等于6位
      */
     @PreAuthorize("hasAuthority('sys:user:updatepassword')")
     @RequestMapping("/updatePassword")
-    public ResponseJson updatePassword(@RequestParam("id") Long id, @RequestParam("loginPassword") String newLoginPassword) {
+    public ResponseJson updatePassword(@RequestParam("originalPassword") String originalPassword, @RequestParam("newPassword") String newLoginPassword) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            userService.updateLoginPassword(id, newLoginPassword);
+            userService.updateLoginPassword(null, originalPassword, newLoginPassword);
             responseJson.setSuccess(true);
             responseJson.setMsg("修改密码成功!");
         }catch (Exception e){
@@ -73,7 +75,6 @@ public class UserController {
 
     /**
      * 修改用户所在机构
-     * @param userId 用户id
      * @param organizationId 新机构id
      * @param remarks 备注
      */
@@ -104,7 +105,7 @@ public class UserController {
      */
     @PreAuthorize("hasAuthority('sys:user:updaterole')")
     @RequestMapping("/updateRole")
-    public ResponseJson updateRole(@RequestParam("userId") Long userId, @RequestParam("roleId") List<Long> roleIdList) {
+    public ResponseJson updateRole(@RequestParam("userId") Long userId, @RequestParam("roleIdList") List<Long> roleIdList) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
@@ -138,6 +139,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('sys:user:create')")
+    @RequestMapping("/create")
     public ResponseJson create(@RequestBody User user){
         ResponseJson responseJson = new ResponseJson();
 
@@ -153,6 +155,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('sys:user:update')")
+    @RequestMapping("update")
     public ResponseJson update(@RequestBody User user){
         ResponseJson responseJson = new ResponseJson();
 
@@ -168,6 +171,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('sys:user:delete')")
+    @RequestMapping("/delete")
     public ResponseJson delete(@RequestParam("userId") Long userId) {
         ResponseJson responseJson = new ResponseJson();
 
@@ -175,6 +179,40 @@ public class UserController {
             userService.delete(userId);
             responseJson.setSuccess(true);
             responseJson.setMsg("删除用户成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:user:getuserpostlist')")
+    @RequestMapping("/getUserPostList")
+    public ResponseJson getUserPostList(@RequestParam(required = false,name = "name") String postName){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Dictionary> userPostList = userService.getUserPostList(postName);
+            responseJson.setData(userPostList);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("获取职位类型成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:user:getuserstatuslist')")
+    @RequestMapping("/getUserStatusList")
+    public ResponseJson getUserStatusList(@RequestParam(required = false,name = "name") String statusName){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Dictionary> userStatusList = userService.getUserStatusList(statusName);
+            responseJson.setData(userStatusList);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("获取状态类型成功");
         } catch (Exception e) {
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());

@@ -2,10 +2,7 @@ package org.nmgns.bps.system.service;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
-import org.nmgns.bps.system.dao.ApiDao;
-import org.nmgns.bps.system.dao.LogDao;
-import org.nmgns.bps.system.dao.RoleDao;
-import org.nmgns.bps.system.dao.UserDao;
+import org.nmgns.bps.system.dao.*;
 import org.nmgns.bps.system.entity.*;
 import org.nmgns.bps.system.utils.DataScopeUtils;
 import org.nmgns.bps.system.utils.DefaultConfig;
@@ -40,6 +37,8 @@ public class UserService {
     private ApiDao apiDao;
     @Autowired
     private DictionaryService dictionaryService;
+    @Autowired
+    private OrganizationDao organizationDao;
 
     @Cacheable("userByCode")
     public User getUserByCode(String code) {
@@ -53,16 +52,26 @@ public class UserService {
 
     @Transactional
     @CacheEvict(value = "userByCode", allEntries = true)
-    public void updateLoginPassword(Long userId, String newLoginPassword) throws RuntimeException{
-        if (userId == null || StrUtil.isBlank(newLoginPassword)) throw new RuntimeException("参数为空");
+    public void updateLoginPassword(Long userId, String originalPassword, String newLoginPassword) throws RuntimeException{
+        if (StrUtil.isBlank(newLoginPassword) || StrUtil.isBlank(originalPassword)) throw new RuntimeException("参数为空");
         if (StrUtil.length(newLoginPassword) < 6) throw new RuntimeException("密码必须超过6位数");
+
+        // 如果前端上传了用户id，则修改指定用户的密码；如果前端未上传用户，则修改当前登录用户的密码
+        User currentUser = userUtils.getCurrentLoginedUser();
+        if(null == userId) userId = currentUser.getId();
 
         User dbUser = userDao.getUserById(userId);
         if (null == dbUser) throw new RuntimeException("用户不存在");
 
+        // 判断旧密码是否正确
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        String dbPassword = dbUser.getLoginPassword();
+        if (StrUtil.isBlank(dbPassword)) throw new RuntimeException("用户不存在原始密码");
+        if(!bCryptPasswordEncoder.matches(originalPassword, dbPassword)) throw new RuntimeException("旧密码不正确");
+
+        // 更新密码
         User user = new User();
         user.setId(userId);
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         String encryptPassword = bCryptPasswordEncoder.encode(newLoginPassword);
         user.setLoginPassword(encryptPassword);
         userDao.update(user);
@@ -92,6 +101,7 @@ public class UserService {
      */
     @Transactional
     public void alterOrganization(Long userId, Long newOrganizationId, String remarks) throws RuntimeException{
+        if (null == userId) throw new RuntimeException("未提供参数");
 
         UserOrganization dbUserOrganization = userDao.getValidUserOrganizationByUserId(userId);
         if (null == dbUserOrganization) {
@@ -222,10 +232,24 @@ public class UserService {
         Long userListCount = userDao.getCount(userPara);
         List<User> userList = userDao.get(userPara);
 
-        //设置返回的职位信息、查找当前最新的状态信息
+        // 设置用户的在职机构
+        for (User u:userList){
+            UserOrganization uo = userDao.getValidUserOrganizationByUserId(u.getId());
+            if (null == uo) throw new RuntimeException("查找用户在职机构失败");
+
+            Organization o = organizationDao.getOrganizationById(uo.getOrganizationId());
+            uo.setOrganizationName(o.getName());
+            uo.setOrganizationCode(o.getCode());
+            u.setCurrentUserOrganization(uo);
+        }
+
+        //设置返回的职位信息、查找当前最新的状态信息、角色信息
         for (int i=0;i<userList.size();i++){
             userList.get(i).setPostStr(dictionaryService.getDictionaryNameByCode(userList.get(i).getPost()));
             userList.get(i).setStatusStr(dictionaryService.getDictionaryNameByCode(userList.get(i).getStatus()));
+
+            List<Role> roleList = roleDao.getRoleListByUserId(userList.get(i).getId());
+            userList.get(i).setRoleList(roleList);
         }
 
         PageData<User> userPageData = new PageData<>();
@@ -247,8 +271,9 @@ public class UserService {
 
         //新增用户时,设置默认密码
         userPara.setLoginPassword(new BCryptPasswordEncoder().encode(DefaultConfig.RESET_ORIG_PASSWORD));
+        userPara.setDelFlag(false);
         // 默认允许登录
-        userPara.setLoginUsable(Boolean.TRUE);
+        if(userPara.getLoginUsable() == null) userPara.setLoginUsable(Boolean.TRUE);
         // 默认非超级用户
         userPara.setAdminFlag(Boolean.FALSE);
         userPara.setCreateBy(userUtils.getCurrentLoginedUser().getId());
@@ -264,6 +289,7 @@ public class UserService {
         uo.setOrganizationId(userPara.getOrganizationId());
         uo.setValidFlag(Boolean.TRUE);
         uo.setStartDate(userPara.getEntryDate());
+        uo.setRemarks(userPara.getUserOrganizationRemarks());
         uo.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         uo.setCreateTime(new Date());
         userDao.insertUserOrganization(uo);
@@ -279,6 +305,18 @@ public class UserService {
         userStatus.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         userStatus.setCreateTime(new Date());
         userDao.insertUserStatus(userStatus);
+
+        //写入用户职位
+        UserPost userPost = new UserPost();
+        userPost.setUserId(userPara.getId());
+        userPost.setStartDate(userPara.getEntryDate());
+        dictionary = dictionaryService.getDictionaryByCode(userPara.getPost());
+        if (null == dictionary) throw new RuntimeException("无效的用户职位代码");
+        userPost.setPost(userPara.getPost());
+        userPost.setValidFlag(Boolean.TRUE);  //新增用户，默认设置用户状态有效
+        userPost.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+        userPost.setCreateTime(new Date());
+        userDao.insertUserPost(userPost);
 
         //写入日志
         Log log = new Log();
@@ -310,9 +348,6 @@ public class UserService {
         }
         if (!StrUtil.equals(userPara.getIdentityNo(), dbUser.getIdentityNo())){
             tmpUser.setIdentityNo(userPara.getIdentityNo());
-        }
-        if (!StrUtil.equals(userPara.getPost(), dbUser.getPost())){
-            tmpUser.setPost(userPara.getPost());
         }
         if (!StrUtil.equals(userPara.getSex(), dbUser.getSex())){
             tmpUser.setSex(userPara.getSex());
@@ -346,6 +381,30 @@ public class UserService {
             }
         }
 
+        // 允许修改用户职位
+        if (StrUtil.isNotBlank(userPara.getPost())){
+            UserPost dbUserPost = userDao.getValidUserPostByUserId(userPara.getId());
+            if (!StrUtil.equals(userPara.getPost(), dbUserPost.getPost())){
+                //修改旧状态为无效
+                UserPost tmpUserPost = new UserPost();
+                tmpUserPost.setId(dbUserPost.getId());
+                tmpUserPost.setEndDate(DateUtil.yesterday());
+                tmpUserPost.setValidFlag(Boolean.FALSE);
+                tmpUserPost.setUpdateBy(userUtils.getCurrentLoginedUser().getId());
+                tmpUserPost.setUpdateTime(new Date());
+                userDao.updateUserPostById(tmpUserPost);
+                //写入新状态
+                tmpUserPost = new UserPost();
+                tmpUserPost.setStartDate(DateUtil.parseDate(DateUtil.today()));
+                tmpUserPost.setPost(userPara.getPost());
+                tmpUserPost.setValidFlag(Boolean.TRUE);
+                tmpUserPost.setParentId(dbUserPost.getId());
+                tmpUserPost.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+                tmpUserPost.setCreateTime(new Date());
+                userDao.insertUserPost(tmpUserPost);
+            }
+        }
+
         //写入日志
         Log log = new Log();
         log.setUserId(userPara.getId());
@@ -373,6 +432,22 @@ public class UserService {
         log.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         log.setOperation("SCYH");
         logDao.insert(log);
+    }
+
+    /**
+     * 获取用户的职位类型列表（用于新增用户、修改用户职位）
+     * @param name 用于搜索、职位类型名称
+     */
+    public List<Dictionary> getUserPostList(String name){
+        return userDao.getUserPostList(name);
+    }
+
+    /**
+     * 获取用户的在职状态类型列表（用于新增用户、修改用户在职状态）
+     * @param name 用于搜索、状态类型名称
+     */
+    public List<Dictionary> getUserStatusList(String name){
+        return userDao.getUserStatusList(name);
     }
 
 

@@ -1,4 +1,4 @@
-INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, post, login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(1,'admin', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '超级用户', null, null, null, null, null, null, '2025-01-01', null, true, null, true, 1, now(), null, null, null, null, false);
+INSERT INTO public.t_sys_user(id, code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date,login_usable, remarks, admin_flag, create_by, create_time, update_by, update_time, login_ip, login_time, del_flag) VALUES(1,'admin', '$2a$10$GT.vY.k4l/iCY0rWk1bVQ.8SfSlBWL4BqUlMWdOi58Uy0QibAq4oW', '超级用户', null, null, null, null, null, null, '2025-01-01', true, null, true, 1, now(), null, null, null, null, false);
 
 
 INSERT INTO public.t_sys_organization(id, parent_id, parent_ids, code, name, sort, icon, area_id, type, grade, address, representative, phone, usable, primary_user_id, deputy_user_id, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES (1, 0, '{0}', '00000', '内蒙古农商银行', 1, null, null, 'ORGANIZATION_TYPE_100', '1', null, null, null, true, null, null, null, 1, now(), null, null, false);
@@ -12,6 +12,8 @@ INSERT INTO public.t_sys_user_organization(user_id, organization_id, start_date,
 
 
 INSERT INTO public.t_sys_user_status(user_id, start_date, end_date, status, valid_flag, parent_id, remarks, create_by, create_time) VALUES (1, '2025-01-01',null, 'USER_STATUS_NORMAL', true, null, null, 1, now());
+
+INSERT INTO public.t_sys_user_post(user_id, start_date, end_date, post, valid_flag, parent_id, remarks, create_by, create_time) VALUES (1, '2025-01-01',null, 'USER_POST_OTHERS', true, null, null, 1, now());
 
 -- 字典表-用户状态
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (1,'USER_STATUS_NORMAL','普通在职', now());
@@ -48,6 +50,7 @@ INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (40,'U
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (41,'USER_POST_CENTERBRANCH_SENIOR_DIRECTOR','中心支行正职', now());
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (42,'USER_POST_SUBBRANCH_OPERATOR','支行操作员', now());
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (43,'USER_POST_SUBBRANCH_TERMINAL_OPERATOR','网点操作员', now());
+INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (44,'USER_POST_OTHERS','其他职位', now());
 -- 字典表-机构类型
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (100, 'ORGANIZATION_TYPE_100', '总行' , now());
 INSERT INTO public.t_sys_dictionary(sort, code, name, create_time) VALUES (101, 'ORGANIZATION_TYPE_101', '总行部门' , now());

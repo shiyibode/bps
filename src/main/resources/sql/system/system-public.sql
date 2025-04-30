@@ -41,7 +41,6 @@ CREATE TABLE public.t_sys_user
     birthday DATE,
     sex VARCHAR(1),
     entry_date DATE,
-    post VARCHAR(128),
     login_usable BOOLEAN NOT NULL DEFAULT TRUE,
     remarks VARCHAR(1024) DEFAULT NULL,
     admin_flag boolean,
@@ -66,7 +65,6 @@ COMMENT ON COLUMN public.t_sys_user.identity_no IS '证件号码';
 COMMENT ON COLUMN public.t_sys_user.birthday IS '生日';
 COMMENT ON COLUMN public.t_sys_user.sex IS '性别 1-男 2-女';
 COMMENT ON COLUMN public.t_sys_user.entry_date IS '入职日期';
-COMMENT ON COLUMN public.t_sys_user.post IS '职位';
 COMMENT ON COLUMN public.t_sys_user.login_usable IS '是否允许登录';
 COMMENT ON COLUMN public.t_sys_user.remarks IS '备注';
 COMMENT ON COLUMN public.t_sys_user.admin_flag IS '超级用户标志';
@@ -166,6 +164,34 @@ COMMENT ON COLUMN public.t_sys_user_organization.create_time IS '创建时间';
 COMMENT ON COLUMN public.t_sys_user_organization.update_by IS '更新人';
 COMMENT ON COLUMN public.t_sys_user_organization.update_time IS '更新时间';
 
+
+drop table if exists public.t_sys_user_post;
+create table public.t_sys_user_post(
+    id bigserial,
+    user_id bigint,
+    start_date date,
+    end_date date,
+    post varchar(128),
+    valid_flag boolean,
+    parent_id bigint,
+    remarks varchar(256),
+    create_by bigint,
+    create_time timestamptz,
+    update_by bigint,
+    update_time timestamptz
+);
+create unique index on public.t_sys_user_post(user_id,start_date);
+
+COMMENT ON COLUMN public.t_sys_user_post.id IS 'id';
+COMMENT ON COLUMN public.t_sys_user_post.user_id IS '用户id';
+COMMENT ON COLUMN public.t_sys_user_post.start_date IS '起始日期';
+COMMENT ON COLUMN public.t_sys_user_post.end_date IS '终止日期';
+COMMENT ON COLUMN public.t_sys_user_post.post IS '职位类型: 内容参照字典表';
+COMMENT ON COLUMN public.t_sys_user_post.valid_flag IS '当前有效状态';
+COMMENT ON COLUMN public.t_sys_user_post.parent_id IS '父id，变更状态时产生';
+COMMENT ON COLUMN public.t_sys_user_post.remarks IS '备注';
+COMMENT ON COLUMN public.t_sys_user_post.create_by IS '创建人';
+COMMENT ON COLUMN public.t_sys_user_post.create_time IS '创建时间';
 
 --用户状态表
 drop table if exists public.t_sys_user_status;

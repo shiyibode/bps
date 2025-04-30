@@ -28,7 +28,6 @@
             <if test="birthday != null">birthday = #{birthday},</if>
             <if test="sex != null and sex != ''">sex = #{sex},</if>
             <if test="entryDate != null">entry_date = #{entryDate},</if>
-            <if test="post != null and post != ''">post = #{post},</if>
             <if test="loginUsable != null">login_usable = #{loginUsable},</if>
             <if test="loginIp != null">login_ip = #{loginIp},</if>
             <if test="loginTime != null">login_time = #{loginTime},</if>
@@ -85,6 +84,7 @@
         left join public.t_sys_user_organization uo on a.id = uo.user_id and uo.valid_flag = true
         join public.t_sys_organization o on uo.organization_id = o.id
         join public.t_sys_user_status s on a.id = s.user_id and s.valid_flag = true
+        join public.t_sys_user_post p on a.id = p.user_id and p.valid_flag = true
         <where>
             a.del_flag = false
             <if test="organizationId != null" >
@@ -93,17 +93,21 @@
             <if test="code != null and code != ''">
                 AND a.code = #{code}
             </if>
+            <if test="name != null and name != ''">
+                AND a.name LIKE '%'||#{name}||'%'
+            </if>
             ${sqlMap.dsf}
         </where>
     </select>
 
     <select id="get" resultType="org.nmgns.bps.system.entity.User" parameterType="org.nmgns.bps.system.entity.User">
-        select a.*,uo.organization_id,s.status
+        select a.*,uo.organization_id,s.status,p.post
         from
             public.t_sys_user a
             left join public.t_sys_user_organization uo on a.id = uo.user_id and uo.valid_flag = true
             join public.t_sys_organization o on uo.organization_id = o.id
             join public.t_sys_user_status s on a.id = s.user_id and s.valid_flag = true
+            join public.t_sys_user_post p on a.id = p.user_id and p.valid_flag = true
         <where>
             a.del_flag = false
             <if test="organizationId != null" >
@@ -111,6 +115,9 @@
             </if>
             <if test="code != null and code != ''">
                 AND a.code = #{code}
+            </if>
+            <if test="name != null and name != ''">
+                AND a.name LIKE '%'||#{name}||'%'
             </if>
             ${sqlMap.dsf}
         </where>
@@ -128,7 +135,7 @@
     </select>
 
     <insert id="insert" parameterType="org.nmgns.bps.system.entity.User" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-        INSERT INTO public.t_sys_user(code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, post, login_usable, remarks, admin_flag, create_by, update_by, update_time, login_ip, login_time, del_flag)
+        INSERT INTO public.t_sys_user(code, login_password, name, phone, mobile, avatar, identity_no, birthday, sex, entry_date, login_usable, remarks, admin_flag, create_by, update_by, update_time, login_ip, login_time, del_flag)
         VALUES (
                    #{code},
                    #{loginPassword},
@@ -140,7 +147,6 @@
                    #{birthday},
                    #{sex},
                    #{entryDate},
-                   #{post},
                    #{loginUsable},
                    #{remarks},
                    #{adminFlag},
@@ -189,6 +195,38 @@
         WHERE id = #{id}
     </update>
 
+    <insert id="insertUserPost" parameterType="org.nmgns.bps.system.entity.UserPost" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO public.t_sys_user_post(user_id, start_date, end_date, post, valid_flag, parent_id, remarks, create_by, create_time)
+        VALUES (
+                   #{userId},
+                   #{startDate},
+                   #{endDate},
+                   #{post},
+                   #{validFlag},
+                   #{parentId},
+                   #{remarks},
+                   #{createBy},
+                   #{createTime}
+               )
+    </insert>
+
+    <select id="getValidUserPostByUserId" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.UserPost">
+        select * from public.t_sys_user_post where user_id = #{userId} and valid_flag = true
+    </select>
+
+    <update id="updateUserPostById" parameterType="org.nmgns.bps.system.entity.UserPost">
+        UPDATE public.t_sys_user_post
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="validFlag != null">valid_flag = #{validFlag},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="remarks != null">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
     <!-- 获取十个用户，同时code字段被复用为用户名称，即用户输入编号或者名称后，都可以搜索到用户 -->
     <select id="getTenUsers" parameterType="org.nmgns.bps.system.entity.User" resultType="org.nmgns.bps.system.entity.User">
         select * from public.t_sys_user u
@@ -203,6 +241,30 @@
     <!-- 获取存款的最大跑批日期 -->
     <select id="getMaxDepositCurrDate" resultType="java.util.Date">
         SELECT max(dp_curr_date) from bps_78000.t_cktj_deposit_handle_config WHERE type = '1';
+    </select>
+
+    <!-- 获取用户的职位列表类型 -->
+    <select id="getUserPostList" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select code,name,sort
+        from public.t_sys_dictionary
+        <where>
+            and code LIKE 'USER_POST_%';
+            <if test="name != null and name != ''">
+                and name like '%'||#{name}||'%'
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取用户的在职状态列表类型 -->
+    <select id="getUserStatusList" parameterType="java.lang.String" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select code,name,sort
+        from public.t_sys_dictionary
+        <where>
+            and code LIKE 'USER_STATUS_%';
+            <if test="name != null and name != ''">
+                and name like '%'||#{name}||'%'
+            </if>
+        </where>
     </select>
 
 

@@ -129,7 +129,7 @@
             o.type as org_type
         from
             bps_78000.t_sys_role_permission rp join bps_78000.t_sys_api a on rp.api_id = a.id join bps_78000.t_sys_role r on rp.role_id = r.id left join bps_78000.t_sys_role_permission_organization rpo on rp.id = rpo.role_permission_id left join public.t_sys_organization o on rpo.organization_id = o.id
-        where rp.api_id = #{apiId})
+        where rp.api_id = #{apiId}
     </select>
 
     <select id="getRoleListByUserId" resultType="org.nmgns.bps.system.entity.Role" parameterType="java.lang.Long">

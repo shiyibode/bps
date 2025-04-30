@@ -2,9 +2,7 @@ package org.nmgns.bps.system.dao;
 
 
 import org.apache.ibatis.annotations.Mapper;
-import org.nmgns.bps.system.entity.User;
-import org.nmgns.bps.system.entity.UserOrganization;
-import org.nmgns.bps.system.entity.UserStatus;
+import org.nmgns.bps.system.entity.*;
 
 import java.util.Date;
 import java.util.List;
@@ -46,8 +44,18 @@ public interface UserDao {
 
     public void updateUserStatusById(UserStatus us);
 
+    public void insertUserPost(UserPost up);
+
+    public UserPost getValidUserPostByUserId(Long userId);
+
+    public void updateUserPostById(UserPost up);
+
     public List<User> getTenUsers(User user);
 
     public Date getMaxDepositCurrDate();
+
+    public List<Dictionary> getUserPostList(String name);
+
+    public List<Dictionary> getUserStatusList(String name);
 
 }
