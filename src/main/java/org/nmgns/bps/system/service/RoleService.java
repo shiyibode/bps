@@ -1,10 +1,7 @@
 package org.nmgns.bps.system.service;
 
 import cn.hutool.core.util.StrUtil;
-import org.nmgns.bps.system.dao.DictionaryDao;
-import org.nmgns.bps.system.dao.LogDao;
-import org.nmgns.bps.system.dao.MenuDao;
-import org.nmgns.bps.system.dao.RoleDao;
+import org.nmgns.bps.system.dao.*;
 import org.nmgns.bps.system.entity.*;
 import org.nmgns.bps.system.utils.DefaultConfig;
 import org.nmgns.bps.system.utils.PageData;
@@ -32,6 +29,8 @@ public class RoleService {
     private DictionaryService dictionaryService;
     @Autowired
     private MenuDao menuDao;
+    @Autowired
+    private ApiDao apiDao;
 
 
     /**
@@ -318,6 +317,13 @@ public class RoleService {
     public void deleteRoleMenu(Long id){
         if (null == id) throw new RuntimeException("未提供参数");
         roleDao.deleteRoleMenuById(id);
+    }
+
+    /**
+     * 获取数据范围类型：全部数据、本机构数据等（用于绑定接口至角色时，确定角色的数据范围）
+     */
+    public List<Dictionary> getDataScopeList(){
+        return roleDao.getDataScopeList();
     }
 
 

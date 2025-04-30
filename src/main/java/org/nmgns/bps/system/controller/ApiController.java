@@ -71,7 +71,7 @@ public class ApiController {
 
     @PreAuthorize("hasAuthority('sys:api:delete')")
     @RequestMapping("/delete")
-    public ResponseJson delete(@RequestParam("apiApiId") Long apiApiId){
+    public ResponseJson delete(@RequestParam("apiId") Long apiApiId){
         ResponseJson responseJson = new ResponseJson();
 
         try {

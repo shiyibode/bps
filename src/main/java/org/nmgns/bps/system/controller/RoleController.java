@@ -1,5 +1,6 @@
 package org.nmgns.bps.system.controller;
 
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.entity.Role;
 import org.nmgns.bps.system.entity.RoleMenu;
 import org.nmgns.bps.system.service.RoleService;
@@ -149,6 +150,24 @@ public class RoleController {
             roleService.deleteRoleMenu(roleMenu.getId());
             responseJson.setSuccess(true);
             responseJson.setMsg("菜单角色关联关系已取消");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+    @PreAuthorize("hasAuthority('sys:role:getdatascopelist')")
+    @RequestMapping("/getDataScopeList")
+    public ResponseJson getDataScopeList(){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Dictionary> dataScopeList = roleService.getDataScopeList();
+            responseJson.setSuccess(true);
+            responseJson.setTotal((long)dataScopeList.size());
+            responseJson.setData(dataScopeList);
+            responseJson.setMsg("获取数据范围类型成功");
         } catch (Exception e) {
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());

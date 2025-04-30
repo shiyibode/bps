@@ -67,4 +67,5 @@ public interface RoleDao {
     public Long getRoleMenuListCount(RoleMenu roleMenu);
 
     public List<RoleMenu> getRoleMenuList(RoleMenu roleMenu);
+
 }

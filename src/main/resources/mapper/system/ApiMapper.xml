@@ -32,8 +32,6 @@
             <if test="name != null and name != ''">name = #{name},</if>
             <if test="uri != null and uri != ''">uri = #{uri},</if>
             <if test="permission != null and permission != ''">permission = #{permission},</if>
-            <if test="isSys != null and isSys != ''">is_sys = #{isSys},</if>
-            <if test="usable != null ">usable = #{usable},</if>
             <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
@@ -49,6 +47,17 @@
         select count(*)
         from
             bps_78000.t_sys_api a
+        <where>
+            <if test="name != null and name != ''">
+                a.name like '%'||#{name}||'%'
+            </if>
+            <if test="uri != null and uri != ''">
+                a.uri like '%'||#{uri}||'%'
+            </if>
+            <if test="permission != null and permission != ''">
+                a.permission like '%'||#{permission}||'%'
+            </if>
+        </where>
     </select>
 
     <select id="get" resultType="org.nmgns.bps.system.entity.Api" parameterType="org.nmgns.bps.system.entity.Api">
@@ -64,6 +73,17 @@
             update_time
         from
             bps_78000.t_sys_api a
+        <where>
+            <if test="name != null and name != ''">
+                a.name like '%'||#{name}||'%'
+            </if>
+            <if test="uri != null and uri != ''">
+                a.uri like '%'||#{uri}||'%'
+            </if>
+            <if test="permission != null and permission != ''">
+                a.permission like '%'||#{permission}||'%'
+            </if>
+        </where>
         <choose>
             <when test="page !=null and page.orderBy != null and page.orderBy != ''">
                 ORDER BY ${page.orderBy}
