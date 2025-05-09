@@ -3,6 +3,7 @@ package org.nmgns.bps.cktj.controller;
 import org.nmgns.bps.cktj.entity.EmployeeAccount;
 import org.nmgns.bps.cktj.entity.TellerPercentage;
 import org.nmgns.bps.cktj.service.EmployeeAccountService;
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/cktj/employeeaccount")
@@ -397,6 +400,28 @@ public class EmployeeAccountController {
             responseJson.setData(tellerPercentagePageData.getList());
             responseJson.setTotal(tellerPercentagePageData.getTotal());
             responseJson.setMsg("获取计酬分成列表成功");
+        }catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 获取账户自动绑定类型
+     */
+    @PreAuthorize("hasAuthority('cktj:employeeaccount:getautobindrule')")
+    @RequestMapping(value = "/getAutoBindRule")
+    public ResponseJson getDepositAccountAutoBindRule() {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Dictionary> ruleList = employeeAccountService.getDepositAccountAutoBindRule();
+            responseJson.setSuccess(true);
+            responseJson.setData(ruleList);
+            responseJson.setTotal((long)ruleList.size());
+            responseJson.setMsg("获取账户自动绑定类型成功");
         }catch (Exception e) {
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());

@@ -33,6 +33,7 @@
             <if test="loginTime != null">login_time = #{loginTime},</if>
             <if test="adminFlag != null">admin_flag = #{adminFlag},</if>
             <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="remarks != null">remarks = #{remarks}</if>
         </trim>
         WHERE id = #{id}
     </update>
@@ -232,8 +233,9 @@
         select * from public.t_sys_user u
         <where>
             <if test="code != null and code != ''">
-                u.code = #{code} or u.name LIKE '%'||#{code}||'%'
+                (u.code LIKE '%'||#{code}||'%' or u.name LIKE '%'||#{code}||'%')
             </if>
+                 and u.admin_flag = false
         </where>
         ORDER BY u.code LIMIT 10
     </select>

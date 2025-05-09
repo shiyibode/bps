@@ -94,7 +94,8 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(37,'获取机构类型列表','/sys/organization/getOrganizationTypeList','sys:organization:getorganizationtypelist','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(38,'获取用户职位类型列表','/sys/user/getUserPostList','sys:user:getuserpostlist','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(39,'获取用户状态类型列表','/sys/user/getUserStatusList','sys:user:getuserstatuslist','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(40,'获取用户状态类型列表','/sys/role/getDataScopeList','sys:role:getdatascopelist','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(40,'获取用户数据类型列表','/sys/role/getDataScopeList','sys:role:getdatascopelist','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(41,'获取最多10个用户，接受编号或姓名参数，复用于code字段','/sys/user/getTenUser','sys:user:gettenusers','手工写入权限',1,now(),1,now());
 
 
 
@@ -150,6 +151,7 @@ INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 38, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 39, 'DATA_SCOPE_ALL', now(), 1);
 INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 40, 'DATA_SCOPE_ALL', now(), 1);
+INSERT INTO bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by) VALUES (1, 41, 'DATA_SCOPE_ALL', now(), 1);
 
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,1,true);
 INSERT INTO bps_78000.t_sys_role_menu(role_id, menu_id, is_show) VALUES (1,2,true);

@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.nmgns.bps.cktj.entity.AutoBindRule;
 import org.nmgns.bps.cktj.entity.EmployeeAccount;
 import org.nmgns.bps.cktj.entity.TellerPercentage;
+import org.nmgns.bps.system.entity.Dictionary;
 
 import java.util.List;
 
@@ -73,5 +74,7 @@ public interface EmployeeAccountDao {
     public Long getTellerPaymentPercentageListCount(TellerPercentage tp);
 
     public List<TellerPercentage> getTellerPaymentPercentageList(TellerPercentage tp);
+
+    public List<Dictionary> getDepositAccountAutoBindRule();
 
 }

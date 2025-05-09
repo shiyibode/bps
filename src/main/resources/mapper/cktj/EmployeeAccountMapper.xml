@@ -13,7 +13,7 @@
             LEFT JOIN bps_78000.t_ods_hxsj_subject_dict s ON a.subject_no = s.no 
         <where>
             <if test="organizationId != null" >
-                o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND a.org_code = #{orgCode}
@@ -67,7 +67,7 @@
             LEFT JOIN bps_78000.t_ods_hxsj_subject_dict s ON a.subject_no = s.no
         <where>
             <if test="organizationId != null" >
-                o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND a.org_code = #{orgCode}
@@ -1502,4 +1502,7 @@
         </if>
     </select>
 
+    <select id="getDepositAccountAutoBindRule" resultType="org.nmgns.bps.system.entity.Dictionary">
+        select * from bps_78000.t_branch_dictionary where code like 'DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_%'
+    </select>
 </mapper>

@@ -336,7 +336,7 @@ public class UserService {
     public void update(User userPara) throws RuntimeException{
         if (null == userPara || userPara.getId() == null ) throw new RuntimeException("修改用户信息时未提供参数");
 
-        //只允许修改：name、mobile、identityNo、post、birthday、sex
+        //只允许修改：name、mobile、identityNo、post、birthday、sex、remarks
         User dbUser = userDao.getUserById(userPara.getId());
         User tmpUser = new User();
         tmpUser.setId(userPara.getId());
@@ -354,6 +354,9 @@ public class UserService {
         }
         if (userPara.getBirthday() != null && !userPara.getBirthday().equals(dbUser.getBirthday())){
             tmpUser.setBirthday(userPara.getBirthday());
+        }
+        if (StrUtil.isNotBlank(userPara.getRemarks())){
+            tmpUser.setRemarks(userPara.getRemarks());
         }
         userDao.update(tmpUser);
 
@@ -448,6 +451,24 @@ public class UserService {
      */
     public List<Dictionary> getUserStatusList(String name){
         return userDao.getUserStatusList(name);
+    }
+
+    /**
+     * 获取10个用户，codeOrName复用code字段，用作搜索参数
+     * @param codeOrName 用户编号或名称
+     */
+    public List<User> getTenUsers(String codeOrName){
+        List<User> userList = userDao.getTenUsers(new User(codeOrName));
+
+        for (int i=0;i<userList.size();i++){
+            UserOrganization uo = userDao.getValidUserOrganizationByUserId(userList.get(i).getId());
+            Organization o = organizationDao.getOrganizationById(uo.getOrganizationId());
+            uo.setOrganizationName(o.getName());
+            uo.setOrganizationCode(o.getCode());
+            userList.get(i).setCurrentUserOrganization(uo);
+        }
+
+        return userList;
     }
 
 

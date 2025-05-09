@@ -8,6 +8,7 @@ import org.nmgns.bps.cktj.entity.EmployeeAccount;
 import org.nmgns.bps.cktj.entity.TellerPercentage;
 import org.nmgns.bps.cktj.utils.DepositDefaultConfig;
 import org.nmgns.bps.system.dao.RoleDao;
+import org.nmgns.bps.system.entity.Dictionary;
 import org.nmgns.bps.system.entity.User;
 import org.nmgns.bps.system.service.ApiService;
 import org.nmgns.bps.system.service.UserService;
@@ -127,6 +128,7 @@ public class EmployeeAccountService {
         // 写入任务分成比例
         List<TellerPercentage> tellerTaskPercentageList = new ArrayList<>();
         Double sumPercentage = (double)0;
+        Integer mainTellerCount = 0;
         for (TellerPercentage tp:employeeAccount.getTellerTaskPercentageList()){
             TellerPercentage tmpTellerPercentage = new TellerPercentage();
             tmpTellerPercentage.setTellerCode(tp.getTellerCode());
@@ -141,9 +143,11 @@ public class EmployeeAccountService {
             tellerTaskPercentageList.add(tmpTellerPercentage);
 
             sumPercentage += tp.getPercentage();
+            if (tp.getMainTeller()) mainTellerCount +=1;
         }
         ea.setTellerTaskPercentageList(tellerTaskPercentageList);
         if (sumPercentage != 1) throw new RuntimeException("分成比例总和不为100%");
+        if (mainTellerCount > 1) throw new RuntimeException("主维护人只能有1位");
         //将新记录插入到t_cktj_employee_account_task表中
         ea.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         ea.setCreateTime(new Date());
@@ -175,17 +179,19 @@ public class EmployeeAccountService {
         employeeAccountDao.insertPayment(ea);
 
 
-        // 写入账户自动绑定层级
-        AutoBindRule abr = new AutoBindRule();
-        abr.setOrgCode(dbUnboundDepositAccount.getOrgCode());
-        abr.setAccountNo(dbUnboundDepositAccount.getAccountNo());
-        abr.setChildAccountNo(dbUnboundDepositAccount.getChildAccountNo());
-        abr.setCustomerNo(dbUnboundDepositAccount.getCustomerNo());
-        if (StrUtil.isNotBlank(employeeAccount.getAutoBindRule())) abr.setLevel(employeeAccount.getAutoBindRule());
-        else abr.setLevel(DepositDefaultConfig.DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_CHILD_ACCOUNT);  // 默认使用子账户级的自动绑定
-        abr.setCreateBy(userUtils.getCurrentLoginedUser().getId());
-        abr.setCreateTime(new Date());
-        employeeAccountDao.insertAutoBindRule(abr);
+        // 写入账户自动绑定层级，而且只允许主账户设定自动绑定规则
+        if (StrUtil.isNotBlank(dbUnboundDepositAccount.getAccountNo()) && (StrUtil.isBlank(dbUnboundDepositAccount.getChildAccountNo()) || dbUnboundDepositAccount.getChildAccountNo().equals("000000"))){
+            AutoBindRule abr = new AutoBindRule();
+            abr.setOrgCode(dbUnboundDepositAccount.getOrgCode());
+            abr.setAccountNo(dbUnboundDepositAccount.getAccountNo());
+            abr.setChildAccountNo(dbUnboundDepositAccount.getChildAccountNo());
+            abr.setCustomerNo(dbUnboundDepositAccount.getCustomerNo());
+            if (StrUtil.isNotBlank(employeeAccount.getAutoBindRule())) abr.setLevel(employeeAccount.getAutoBindRule());
+            else abr.setLevel(DepositDefaultConfig.DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT);  // 默认使用子账户级的自动绑定
+            abr.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+            abr.setCreateTime(new Date());
+            employeeAccountDao.insertAutoBindRule(abr);
+        }
 
 
         //删除t_cktj_unbound_account表中的未绑定记录
@@ -828,6 +834,10 @@ public class EmployeeAccountService {
         tellerPercentagePageData.setList(tellerPercentageList);
 
         return tellerPercentagePageData;
+    }
+
+    public List<Dictionary> getDepositAccountAutoBindRule(){
+        return employeeAccountDao.getDepositAccountAutoBindRule();
     }
 
 

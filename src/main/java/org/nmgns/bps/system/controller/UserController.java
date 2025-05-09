@@ -3,7 +3,6 @@ package org.nmgns.bps.system.controller;
 import cn.hutool.json.JSONUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.nmgns.bps.system.entity.Dictionary;
-import org.nmgns.bps.system.entity.Role;
 import org.nmgns.bps.system.entity.User;
 import org.nmgns.bps.system.service.UserService;
 import org.nmgns.bps.system.utils.PageData;
@@ -219,6 +218,25 @@ public class UserController {
         }
         return responseJson;
     }
+
+    @PreAuthorize("hasAuthority('sys:user:gettenusers')")
+    @RequestMapping("/getTenUsers")
+    public ResponseJson getTenUsers(@RequestParam(required = false,name = "code") String codeOrName){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<User> userList = userService.getTenUsers(codeOrName);
+            responseJson.setData(userList);
+            responseJson.setSuccess(true);
+            responseJson.setMsg("获取用户成功");
+        } catch (Exception e) {
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+
 
 
 }

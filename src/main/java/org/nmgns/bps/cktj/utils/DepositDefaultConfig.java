@@ -10,7 +10,7 @@ public class DepositDefaultConfig {
     public static final String CHECKED_STATUS_CHECKED = "CHECKED_STATUS_CHECKED";
     public static final String CHECKED_STATUS_DENIED = "CHECKED_STATUS_DENIED";
 
-    public static final String DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_CHILD_ACCOUNT = "DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_CHILD_ACCOUNT";
+    public static final String DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT = "DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT";
 
     public static final String DEPOSIT_TYPE_ACCOUNTING_WAY = "DEPOSIT_TYPE_ACCOUNTING_WAY";     //核心系统存款
     public static final String DEPOSIT_TYPE_MANAGE_WAY = "DEPOSIT_TYPE_MANAGE_WAY";     //汇总存款

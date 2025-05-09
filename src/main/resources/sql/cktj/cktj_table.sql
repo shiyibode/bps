@@ -533,11 +533,15 @@ CREATE TABLE bps_78000.t_cktj_auto_bind_rule(
     account_no varchar(22) not null ,
     child_account_no varchar(10),
     customer_no varchar(20) not null ,
-    level varchar(128) not null default 'DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_CHILD_ACCOUNT',
+    level varchar(128) not null default 'DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT',
     create_time timestamptz default now(),
     create_by bigint,
     update_time timestamptz,
-    update_by bigint
+    update_by bigint,
+    -- 约束
+    CONSTRAINT child_account_no_check CHECK (
+        child_account_no IS NULL OR child_account_no = '000000'
+    )
 );
 
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.id IS 'id';
@@ -545,7 +549,7 @@ COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.org_code IS '设置绑定规�
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.account_no IS '设置绑定规则时使用的账号';
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.child_account_no IS '设置绑定规则时使用的子账号';
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.customer_no IS '客户号';
-COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.level IS '层级: DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_NONE-不自动绑定  DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_CHILD_ACCOUNT-子账户级自动绑定 DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT-账户级自动绑定';
+COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.level IS '层级: DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_NONE-不自动绑定  DEPOSIT_ACCOUNT_AUTO_BIND_LEVEL_ACCOUNT-账户级自动绑定';
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.create_time IS '创建时间';
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.create_by IS '创建者';
 COMMENT ON COLUMN bps_78000.t_cktj_auto_bind_rule.update_time IS '更新时间';

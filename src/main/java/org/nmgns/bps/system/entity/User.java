@@ -12,6 +12,12 @@ import java.util.List;
 @Data
 public class User extends BaseDataScopePageEntity<User> {
 
+    public User(){}
+
+    public User(String code){
+        this.code = code;
+    }
+
     private String code;
     @JsonIgnore
     private String loginPassword;
