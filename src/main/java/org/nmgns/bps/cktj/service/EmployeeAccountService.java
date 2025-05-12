@@ -493,7 +493,6 @@ public class EmployeeAccountService {
             if (null == user) {
                 throw new RuntimeException("登记揽储人出错, 编号为 [ " + tp.getTellerCode() + " ] 的员工信息不存在，请输入正确的柜员号！");
             }
-            if (null == tp.getMainTeller()) throw new RuntimeException("登记揽储人出错，未确定是否主揽储人身份");
             sumPercentage += tp.getPercentage();
         }
         if(sumPercentage != 1) throw new RuntimeException("比例求和不为100%");

@@ -218,7 +218,7 @@
                   #{tellerPercentage.alterCheckTellerCode},
                   #{tellerPercentage.registerCheckTime},
                   #{tellerPercentage.alterCheckTime},
-                  #{tellerPercentage.parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+                  #{tellerPercentage.parentIds, typeHandler=org.nmgns.bps.system.utils.LongListToPgArrayTypeHandler},
                   #{tellerPercentage.remarks},
                   #{tellerPercentage.createTime},
                   #{tellerPercentage.createBy}
@@ -286,7 +286,7 @@
             #{tellerPercentage.alterCheckTellerCode},
             #{tellerPercentage.registerCheckTime},
             #{tellerPercentage.alterCheckTime},
-            #{tellerPercentage.parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler},
+            #{tellerPercentage.parentIds, typeHandler=org.nmgns.bps.system.utils.LongListToPgArrayTypeHandler},
             #{tellerPercentage.remarks},
             #{tellerPercentage.createTime},
             #{tellerPercentage.createBy}
@@ -334,7 +334,7 @@
                 <where>
                     ea.register_check_status = 'CHECKED_STATUS_UNCHECKED'
                     <if test="organizationId != null" >
-                        AND o.id = #{organizationId}
+                        and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
                     </if>
                     <if test="orgCode != null and orgCode != ''">
                         AND ea.org_code = #{orgCode}
@@ -387,7 +387,7 @@
         <where>
             ea.register_check_status = 'CHECKED_STATUS_UNCHECKED'
             <if test="organizationId != null" >
-                AND o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND ea.org_code = #{orgCode}
@@ -566,7 +566,7 @@
             <if test="alterCheckTellerCode != null and alterCheckTellerCode != ''">alter_check_teller_code = #{alterCheckTellerCode},</if>
             <if test="registerCheckTime != null ">register_check_time = #{registerCheckTime},</if>
             <if test="alterCheckTime != null ">alter_check_time = #{alterCheckTime},</if>
-            <if test="parentIds != null ">parent_ids = #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler, jdbcType=ARRAY},</if>
+            <if test="parentIds != null ">parent_ids = #{parentIds, typeHandler=org.nmgns.bps.system.utils.LongListToPgArrayTypeHandler},</if>
             <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
@@ -587,7 +587,7 @@
             <if test="alterCheckTellerCode != null and alterCheckTellerCode != ''">alter_check_teller_code = #{alterCheckTellerCode},</if>
             <if test="registerCheckTime != null ">register_check_time = #{registerCheckTime},</if>
             <if test="alterCheckTime != null ">alter_check_time = #{alterCheckTime},</if>
-            <if test="parentIds != null ">parent_ids = #{parentIds, typeHandler=org.apache.ibatis.type.ArrayTypeHandler, jdbcType=ARRAY},</if>
+            <if test="parentIds != null ">parent_ids = #{parentIds, typeHandler=org.nmgns.bps.system.utils.LongListToPgArrayTypeHandler},</if>
             <if test="remarks != null and remarks != ''">remarks = #{remarks},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
@@ -801,7 +801,7 @@
                 <where>
                     ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
                     <if test="organizationId != null" >
-                        AND o.id = #{organizationId}
+                        and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
                     </if>
                     <if test="orgCode != null and orgCode != ''">
                         AND ea.org_code = #{orgCode}
@@ -855,7 +855,7 @@
         <where>
             ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
             <if test="organizationId != null" >
-                AND o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND ea.org_code = #{orgCode}
@@ -921,7 +921,7 @@
         <where>
             ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
             <if test="organizationId != null" >
-                AND o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND ea.org_code = #{orgCode}
@@ -975,7 +975,7 @@
         <where>
             ea.valid_flag = true and ea.register_check_status = 'CHECKED_STATUS_CHECKED' and (ea.alter_check_status is null or ea.alter_check_status = 'CHECKED_STATUS_CHECKED')
             <if test="organizationId != null" >
-                AND o.id = #{organizationId}
+                and (o.id = #{organizationId} OR ( o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) ) )
             </if>
             <if test="orgCode != null and orgCode != ''">
                 AND ea.org_code = #{orgCode}

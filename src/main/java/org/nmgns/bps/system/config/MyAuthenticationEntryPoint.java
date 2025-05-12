@@ -20,6 +20,7 @@ public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
         JSONObject json = new JSONObject();
         json.set("success", false);
         json.set("data", new UnAuthenticationClass());
+        json.set("msg","用户未登录或登录已失效");
 
 //        response.setContentType("text/html;charset=utf-8");
         response.setContentType("application/json");

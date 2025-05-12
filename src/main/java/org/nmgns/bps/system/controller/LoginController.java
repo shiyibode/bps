@@ -97,6 +97,7 @@ public class LoginController {
         else {
             retData.put("loggedIn", Boolean.FALSE);
             responseJson.setSuccess(Boolean.FALSE);
+            responseJson.setMsg("用户未登录或登录已失效");
         }
 
         responseJson.setData(retData);

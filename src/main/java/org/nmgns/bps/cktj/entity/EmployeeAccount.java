@@ -6,6 +6,7 @@ import lombok.Data;
 import org.nmgns.bps.cktj.utils.TypeString;
 import org.nmgns.bps.system.utils.base.BaseDataScopePageEntity;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -68,6 +69,8 @@ public class EmployeeAccount extends BaseDataScopePageEntity<EmployeeAccount> {
             StringBuilder sb = new StringBuilder();
             for (TellerPercentage tp : tellerTaskPercentageList) {
                 sb.append(tp.getTellerName());
+                sb.append("-");
+                sb.append(tp.getTellerCode());
                 sb.append(":");
                 sb.append(tp.getPercentage()*100);
                 sb.append("%, ");
@@ -84,6 +87,8 @@ public class EmployeeAccount extends BaseDataScopePageEntity<EmployeeAccount> {
             StringBuilder sb = new StringBuilder();
             for (TellerPercentage tp : tellerPaymentPercentageList) {
                 sb.append(tp.getTellerName());
+                sb.append("-");
+                sb.append(tp.getTellerCode());
                 sb.append(":");
                 sb.append(tp.getPercentage()*100);
                 sb.append("%, ");
@@ -94,6 +99,32 @@ public class EmployeeAccount extends BaseDataScopePageEntity<EmployeeAccount> {
         return null;
     }
 
+    public String getCreateTimeStr(){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (tellerTaskPercentageList!= null && !tellerTaskPercentageList.isEmpty()) return sdf.format(tellerTaskPercentageList.getFirst().getCreateTime());
+        else return "";
+    }
+
+    public String getOpTellerCode(){
+        if (tellerTaskPercentageList!= null && !tellerTaskPercentageList.isEmpty()) return tellerTaskPercentageList.getFirst().getOpTellerCode();
+        else return "";
+    }
+
+    public String getRegisterTypeStr(){
+        if (tellerTaskPercentageList!= null && !tellerTaskPercentageList.isEmpty()) return tellerTaskPercentageList.getFirst().getRegisterType();
+        else return "";
+    }
+
+    public String getRegisterCheckStatus(){
+        if (tellerTaskPercentageList!= null && !tellerTaskPercentageList.isEmpty()) return tellerTaskPercentageList.getFirst().getRegisterCheckStatus();
+        else return "";
+    }
+
+    public String getStartDateStr(){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        if (tellerTaskPercentageList!= null && !tellerTaskPercentageList.isEmpty()) return sdf.format(tellerTaskPercentageList.getFirst().getStartDate());
+        return null;
+    }
 
 
 
