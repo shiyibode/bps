@@ -252,6 +252,24 @@ public class OrganizationService {
         return organizationDao.getOrganizationTypeList();
     }
 
+    /**
+     * 获取网点或者部室所属的支行
+     * @param orgCode 机构号
+     */
+    public Organization getSubBranchByOrgCode(String orgCode){
+        if(StrUtil.isBlank(orgCode)) return null;
+        return organizationDao.getSubBranchByOrgCode(orgCode);
+    }
+
+    /**
+     * 获取网点或者部室所属的中心支行
+     * @param orgCode 机构号
+     */
+    public Organization getBranchByOrgCode(String orgCode){
+        if(StrUtil.isBlank(orgCode)) return null;
+        return organizationDao.getBranchByOrgCode(orgCode);
+    }
+
 
 
 

@@ -15,6 +15,7 @@
                    group by menu_id
                    )
             and del_flag = false
+        order by sort
     </select>
 
     <select id="getAllMenuList" resultType="org.nmgns.bps.system.entity.Menu" >

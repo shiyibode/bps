@@ -2,6 +2,7 @@ package org.nmgns.bps.cktj.dao;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.nmgns.bps.cktj.entity.AutoBindRule;
+import org.nmgns.bps.cktj.entity.BindLevel;
 import org.nmgns.bps.cktj.entity.EmployeeAccount;
 import org.nmgns.bps.cktj.entity.TellerPercentage;
 import org.nmgns.bps.system.entity.Dictionary;
@@ -23,33 +24,47 @@ public interface EmployeeAccountDao {
 
     public void insertTask(EmployeeAccount ea);
 
+    public void insertTaskTellerPercentage(TellerPercentage tp);
+
     public void insertPayment(EmployeeAccount ea);
+
+    public void insertPaymentTellerPercentage(TellerPercentage tp);
+
+    public BindLevel getBindLevelByOrgAndFlag(BindLevel bl);
 
     public void deleteUnboundAccountById(Long id);
 
-    public EmployeeAccount getById(Long id);
+    public EmployeeAccount getEmployeeTaskById(Long id);
+
+    public EmployeeAccount getEmployeePaymentById(Long id);
 
     public Long findRegisterUncheckedAccountCount(EmployeeAccount ea);
 
     public List<EmployeeAccount> findRegisterUncheckedAccount(EmployeeAccount ea);
 
-    public List<TellerPercentage> getTellerTaskPercentageListByAccountNoAndChildAccountNo(TellerPercentage tp);
+    public List<TellerPercentage> getTellerTaskPercentageListByEmployeeAccountId(EmployeeAccount ea);
 
-    public List<TellerPercentage> getTellerPaymentPercentageListByAccountNoAndChildAccountNo(TellerPercentage tp);
+    public List<TellerPercentage> getTellerPaymentPercentageListByEmployeeAccountId(EmployeeAccount ea);
 
-    public void updateTaskById(TellerPercentage tp);
+    public List<TellerPercentage> getTellerPaymentPercentageListByEmployeeAccountAndChildAccountNo(EmployeeAccount ea);
 
-    public void updatePaymentById(TellerPercentage tp);
+    public void updateTaskById(EmployeeAccount ea);
+
+    public void updatePaymentById(EmployeeAccount ea);
 
     public void deleteTask(Long id);
+
+    public void deleteTaskTellerPercentage(Long taskEmpAcctId);
+
+    public void deletePaymentTellerPercentage(Long paymentEmpAcctId);
 
     public void deletePayment(Long id);
 
     public void insertUnboundEmployeeAccount(EmployeeAccount ea);
 
-    public EmployeeAccount getEmployeeAccountByAccountNoAndChildAccountNoFromTask(TellerPercentage tp);
+    public EmployeeAccount getEmployeeAccountByAccountNoAndChildAccountNoFromTask(EmployeeAccount ea);
 
-    public EmployeeAccount getEmployeeAccountByAccountNoAndChildAccountNoFromPayment(TellerPercentage tp);
+    public EmployeeAccount getEmployeeAccountByAccountNoAndChildAccountNoFromPayment(EmployeeAccount ea);
 
     public Long findTaskModifiableAccountCount(EmployeeAccount ea);
 
@@ -66,14 +81,6 @@ public interface EmployeeAccountDao {
     public Long findModifiedUncheckedAccountPaymentCount(EmployeeAccount ea);
 
     public List<EmployeeAccount> findModifiedUncheckedAccountPayment(EmployeeAccount ea);
-
-    public Long getTellerTaskPercentageListCount(TellerPercentage tp);
-
-    public List<TellerPercentage> getTellerTaskPercentageList(TellerPercentage tp);
-
-    public Long getTellerPaymentPercentageListCount(TellerPercentage tp);
-
-    public List<TellerPercentage> getTellerPaymentPercentageList(TellerPercentage tp);
 
     public List<Dictionary> getDepositAccountAutoBindRule();
 

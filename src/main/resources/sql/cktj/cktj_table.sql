@@ -89,9 +89,7 @@ CREATE INDEX ON bps_78000.t_cktj_unbound_account(account_no);
 DROP TABLE IF EXISTS bps_78000.t_cktj_employee_account_task;
 CREATE TABLE bps_78000.t_cktj_employee_account_task (
      id BIGSERIAL PRIMARY KEY NOT NULL,
-     teller_code VARCHAR(20),
-    percentage numeric(7,4),
-    main_teller boolean,
+    main_teller_teller_code varchar(20),
      org_code VARCHAR(20),
      account_no VARCHAR(22),
     child_account_no varchar(10),
@@ -115,7 +113,7 @@ CREATE TABLE bps_78000.t_cktj_employee_account_task (
      alter_check_teller_code VARCHAR(20),
      register_check_time TIMESTAMPTZ,
      alter_check_time TIMESTAMPTZ,
-     parent_ids BIGINT[],
+     parent_id BIGINT,
      remarks VARCHAR(256),
      create_time TIMESTAMPTZ,
      create_by BIGINT,
@@ -127,9 +125,7 @@ COMMENT ON TABLE bps_78000.t_cktj_employee_account_task IS '员工揽储账户�
 COMMENT ON SEQUENCE bps_78000.t_cktj_employee_account_task_id_seq IS '员工揽储账户表主键序列';
 -- bps_78000.t_cktj_employee_account_task 表字段注释
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.id IS '主键';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.teller_code IS '柜员号';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.percentage IS '柜员号';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.main_teller IS '是否主维护人';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.main_teller_teller_code IS '主维护人的员工编号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.org_code IS '账户机构编号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.account_no IS '账号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.child_account_no IS '账号';
@@ -153,23 +149,37 @@ COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.register_check_teller_c
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.alter_check_teller_code IS '变更复核柜员号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.register_check_time IS '登记复核时间';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.alter_check_time IS '变更复核时间';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.parent_ids IS '上级ID(变更揽储人时产生)';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.parent_id IS '上级ID(变更揽储人时产生)';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.remarks IS '备注';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.create_by IS '创建人';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.update_by IS '修改人';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task.update_time IS '修改时间';
 create index ON bps_78000.t_cktj_employee_account_task(account_no);
 create index ON bps_78000.t_cktj_employee_account_task(account_no, start_date, end_date);
-create unique index on bps_78000.t_cktj_employee_account_task(account_no,start_date,teller_code);
+create unique index on bps_78000.t_cktj_employee_account_task(account_no,start_date);
+
+--员工任务分成明细表
+DROP TABLE IF EXISTS bps_78000.t_cktj_employee_account_task_detail;
+CREATE TABLE bps_78000.t_cktj_employee_account_task_detail (
+   emp_acct_id bigint,
+   teller_code varchar(20),
+   percentage  numeric(7, 4),
+   create_time timestamptz default now(),
+   create_by   bigint
+);
+
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task_detail.emp_acct_id IS 'employee_account_task的id';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task_detail.teller_code IS '员工编号';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task_detail.percentage IS '分成比例';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task_detail.create_time IS '创建时间';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_task_detail.create_by IS '创建人';
 
 
 --员工存款账户表（计酬工资数）
 DROP TABLE IF EXISTS bps_78000.t_cktj_employee_account_payment;
 CREATE TABLE bps_78000.t_cktj_employee_account_payment (
     id BIGSERIAL PRIMARY KEY NOT NULL,
-    teller_code VARCHAR(20),
-   percentage numeric(7,4),
-   main_teller boolean,
+    main_teller_code varchar(20),
     org_code VARCHAR(20),
     account_no VARCHAR(22),
    child_account_no varchar(10),
@@ -193,7 +203,7 @@ CREATE TABLE bps_78000.t_cktj_employee_account_payment (
     alter_check_teller_code VARCHAR(20),
     register_check_time TIMESTAMPTZ,
     alter_check_time TIMESTAMPTZ,
-    parent_ids BIGINT[],
+    parent_id bigint,
     remarks VARCHAR(256),
     create_time TIMESTAMPTZ,
     create_by BIGINT,
@@ -205,8 +215,7 @@ COMMENT ON TABLE bps_78000.t_cktj_employee_account_payment IS '员工揽储账�
 COMMENT ON SEQUENCE bps_78000.t_cktj_employee_account_payment_id_seq IS '员工揽储账户表主键序列';
 -- bps_78000.t_cktj_employee_account_payment 表字段注释
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.id IS '主键';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.teller_code IS '柜员号';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.percentage IS '柜员号';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.main_teller_code IS '柜员号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.org_code IS '账户机构编号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.account_no IS '账号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.child_account_no IS '账号';
@@ -230,18 +239,32 @@ COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.register_check_telle
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.alter_check_teller_code IS '变更复核柜员号';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.register_check_time IS '登记复核时间';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.alter_check_time IS '变更复核时间';
-COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.parent_ids IS '上级ID(变更揽储人时产生)';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.parent_id IS '上级ID(变更揽储人时产生)';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.remarks IS '备注';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.create_by IS '创建人';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.update_by IS '修改人';
 COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment.update_time IS '修改时间';
 create index ON bps_78000.t_cktj_employee_account_payment(account_no);
 create index ON bps_78000.t_cktj_employee_account_payment(account_no, start_date, end_date);
-create unique index on bps_78000.t_cktj_employee_account_payment(account_no,start_date,teller_code);
+create unique index on bps_78000.t_cktj_employee_account_payment(account_no,start_date);
 
 
+DROP TABLE IF EXISTS bps_78000.t_cktj_employee_account_payment_detail;
+CREATE TABLE bps_78000.t_cktj_employee_account_payment_detail (
+    emp_acct_id bigint,
+    teller_code varchar(20),
+    percentage  numeric(7, 4),
+    create_time timestamptz default now(),
+    create_by   bigint
+);
 
--- 员工存款明细表（任务数）
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment_detail.emp_acct_id IS 'employee_account_task的id';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment_detail.teller_code IS '员工编号';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment_detail.percentage IS '分成比例';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment_detail.create_time IS '创建时间';
+COMMENT ON COLUMN bps_78000.t_cktj_employee_account_payment_detail.create_by IS '创建人';
+
+-- 员工存款跑批后结果明细表（任务数）
 DROP TABLE IF EXISTS bps_78000.t_cktj_employee_deposit_task_detail;
 CREATE TABLE bps_78000.t_cktj_employee_deposit_task_detail (
     id BIGSERIAL NOT NULL PRIMARY KEY,
@@ -279,7 +302,7 @@ COMMENT ON COLUMN bps_78000.t_cktj_employee_deposit_task_detail.update_time IS '
 CREATE UNIQUE INDEX ON bps_78000.t_cktj_employee_deposit_task_detail(date, teller_code, dp_org_code, belong_org_code, dp_category_id);
 
 
--- 员工存款明细表
+-- 员工存款跑批后结果明细表（计酬数）
 DROP TABLE IF EXISTS bps_78000.t_cktj_employee_deposit_payment_detail;
 CREATE TABLE bps_78000.t_cktj_employee_deposit_payment_detail (
        id BIGSERIAL NOT NULL PRIMARY KEY,
@@ -421,7 +444,7 @@ DROP TABLE IF EXISTS bps_78000.t_cktj_bind_level;
 CREATE TABLE bps_78000.t_cktj_bind_level(
     id serial,
     org_code varchar(20),
-    task_payment_flag varchar(10),
+    task_payment_flag varchar(128),
     level varchar(128),
     create_time timestamptz,
     create_by bigint,
@@ -432,8 +455,8 @@ CREATE UNIQUE INDEX ON bps_78000.t_cktj_bind_level(org_code, task_payment_flag);
 
 COMMENT ON COLUMN bps_78000.t_cktj_bind_level.id IS 'id';
 COMMENT ON COLUMN bps_78000.t_cktj_bind_level.org_code IS '机构号';
-COMMENT ON COLUMN bps_78000.t_cktj_bind_level.task_payment_flag IS '任务数还是计酬数的标志: task-任务数  payment-计酬数';
-COMMENT ON COLUMN bps_78000.t_cktj_bind_level.level IS '层级: terminal-网点  subbranch-支行  branch-中心支行  headquarters-总行';
+COMMENT ON COLUMN bps_78000.t_cktj_bind_level.task_payment_flag IS '任务数还是计酬数的标志: EVALUATION_TYPE_TASK-任务数  EVALUATION_TYPE_PAYMENT-计酬数';
+COMMENT ON COLUMN bps_78000.t_cktj_bind_level.level IS '层级: DEPOSIT_ORG_BIND_RULE_INSIDE_TERMINAL-网点  DEPOSIT_ORG_BIND_RULE_INSIDE_SUBBRANCH-支行  DEPOSIT_ORG_BIND_RULE_INSIDE_BRANCH-中心支行  DEPOSIT_ORG_BIND_RULE_ALL-总行';
 COMMENT ON COLUMN bps_78000.t_cktj_bind_level.create_time IS '创建时间';
 COMMENT ON COLUMN bps_78000.t_cktj_bind_level.create_by IS '创建人';
 COMMENT ON COLUMN bps_78000.t_cktj_bind_level.update_time IS '更新时间';

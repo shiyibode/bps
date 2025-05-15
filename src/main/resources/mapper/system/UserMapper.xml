@@ -74,7 +74,14 @@
     </delete>
 
     <select id="getValidUserOrganizationByUserId" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.UserOrganization">
-        select * from public.t_sys_user_organization where user_id = #{userId} and valid_flag = true
+        select
+            a.*,
+            o.code as organization_code,
+            o.name as organization_name
+        from
+            public.t_sys_user_organization a
+            left join public.t_sys_organization o on o.id = a.organization_id
+        where user_id = #{userId} and valid_flag = true
     </select>
 
 

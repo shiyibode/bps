@@ -183,7 +183,7 @@ public class EmployeeAccountController {
 
     /**
      * 变更揽储人申请-任务数
-     * @param employeeAccount 包含accountNo、childAccountNo、tellerTaskPercentageList（这里包含新的用户分成信息:tellerCode、percentage）
+     * @param employeeAccount 包含id、tellerTaskPercentageList（这里包含新的用户分成信息:tellerCode、percentage）
      */
     @PreAuthorize("hasAuthority('cktj:employeeaccount:modifyemployeetask')")
     @RequestMapping(value = "/modifyemployeetask")
@@ -364,15 +364,15 @@ public class EmployeeAccountController {
 
     /**
      * 获取揽储人存款账户信息列表- 任务
-     * @param tellerPercentage 包含分页信息、搜索信息
+     * @param employeeAccount 包含分页信息、搜索信息
      */
     @PreAuthorize("hasAuthority('cktj:employeeaccount:gettask')")
     @RequestMapping(value = "/gettask")
-    public ResponseJson getTask(@RequestBody TellerPercentage tellerPercentage) {
+    public ResponseJson getTask(@RequestBody EmployeeAccount employeeAccount) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findTellerPercentageTaskPage(tellerPercentage);
+            PageData<EmployeeAccount> tellerPercentagePageData = employeeAccountService.findTellerPercentageTaskPage(employeeAccount);
             responseJson.setSuccess(true);
             responseJson.setData(tellerPercentagePageData.getList());
             responseJson.setTotal(tellerPercentagePageData.getTotal());
@@ -387,15 +387,15 @@ public class EmployeeAccountController {
 
     /**
      * 获取揽储人存款账户信息列表 -计酬
-     * @param tellerPercentage 包含分页信息、搜索信息
+     * @param employeeAccount 包含分页信息、搜索信息
      */
     @PreAuthorize("hasAuthority('cktj:employeeaccount:getpayment')")
     @RequestMapping(value = "/getpayment")
-    public ResponseJson getPayment(@RequestBody TellerPercentage tellerPercentage) {
+    public ResponseJson getPayment(@RequestBody EmployeeAccount employeeAccount) {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            PageData<TellerPercentage> tellerPercentagePageData = employeeAccountService.findTellerPercentagePaymentPage(tellerPercentage);
+            PageData<EmployeeAccount> tellerPercentagePageData = employeeAccountService.findTellerPercentagePaymentPage(employeeAccount);
             responseJson.setSuccess(true);
             responseJson.setData(tellerPercentagePageData.getList());
             responseJson.setTotal(tellerPercentagePageData.getTotal());

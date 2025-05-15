@@ -29,4 +29,8 @@ public interface OrganizationDao {
     public List<Organization> getUpperLevelOrgListById(Long organizationId);
 
     public List<Dictionary> getOrganizationTypeList();
+
+    public Organization getSubBranchByOrgCode(String orgCode);
+
+    public Organization getBranchByOrgCode(String orgCode);
 }

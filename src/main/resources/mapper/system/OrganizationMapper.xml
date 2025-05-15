@@ -128,6 +128,16 @@
         select code,name,sort from public.t_sys_dictionary where code LIKE 'ORGANIZATION_TYPE_%' order by sort;
     </select>
 
+    <!-- 获取一个网点或者部室所属的支行 -->
+    <select id="getSubBranchByOrgCode" parameterType="java.lang.String">
+        select * from t_sys_organization where (select parent_ids from t_sys_organization where code = #{orgCode}) @> ARRAY[id::integer] and type = 'ORGANIZATION_TYPE_300';
+    </select>
+
+    <!-- 获取一个网点或者部室所属的中心支行 -->
+    <select id="getBranchByOrgCode" parameterType="java.lang.String">
+        select * from t_sys_organization where (select parent_ids from t_sys_organization where code = #{orgCode}) @> ARRAY[id::integer] and type = 'ORGANIZATION_TYPE_200';
+    </select>
+
 
 
 

@@ -471,6 +471,14 @@ public class UserService {
         return userList;
     }
 
+    /**
+     * 通过用户id获取用户当前的在职机构
+     * @param userId 用户id
+     */
+    public UserOrganization getValidUserOrganizationByUserId(Long userId){
+        return userDao.getValidUserOrganizationByUserId(userId);
+    }
+
 
 
 
