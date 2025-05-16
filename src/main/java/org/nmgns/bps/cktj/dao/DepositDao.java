@@ -9,13 +9,21 @@ import java.util.List;
 @Mapper
 public interface DepositDao {
 
-    List<Deposit> findEmployeeDepositList(Deposit deposit);
+    List<Deposit> findEmployeeTaskDepositList(Deposit deposit);
 
     Long findTaskEmployeePageCount(Deposit deposit);
 
     List<String> findTaskEmployeePage(Deposit deposit);
 
-    List<Deposit> findEmployeeAvgDepositList(Deposit deposit);
+    List<Deposit> findEmployeeAvgTaskDepositList(Deposit deposit);
+
+    List<Deposit> findEmployeePaymentDepositList(Deposit deposit);
+
+    Long findPaymentEmployeePageCount(Deposit deposit);
+
+    List<String> findPaymentEmployeePage(Deposit deposit);
+
+    List<Deposit> findEmployeeAvgPaymentDepositList(Deposit deposit);
 
 
 

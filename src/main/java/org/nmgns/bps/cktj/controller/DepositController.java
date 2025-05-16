@@ -85,6 +85,54 @@ public class DepositController {
         return responseJson;
     }
 
+    /**
+     * 分页获取员工的存款计酬完成情况
+     * @param deposit 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:deposit:employeepayment')")
+    @RequestMapping(value = "/employeepayment")
+    public ResponseJson getEmployeeDepositPaymentList(@RequestBody Deposit deposit) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<Deposit> depositPageData = depositService.findEmployeePaymentDepositList(deposit);
+            responseJson.setSuccess(true);
+            responseJson.setData(depositPageData.getList());
+            responseJson.setTotal(depositPageData.getTotal());
+            responseJson.setMsg("获取员工的存款任务完成情况成功");
+        }catch (Exception e) {
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 分页获取员工的日均存款计酬完成情况
+     * @param deposit 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:deposit:empaveragepayment')")
+    @RequestMapping(value = "/empaveragepayment")
+    public ResponseJson getEmployeeAvgDepositPaymentList(@RequestBody Deposit deposit) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<Deposit> depositPageData = depositService.findEmployeePaymentDepositAvgList(deposit);
+            responseJson.setSuccess(true);
+            responseJson.setData(depositPageData.getList());
+            responseJson.setTotal(depositPageData.getTotal());
+            responseJson.setMsg("获取员工的存款日均任务完成情况成功");
+        }catch (Exception e) {
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
 
 
 }
