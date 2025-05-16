@@ -1,5 +1,6 @@
 package org.nmgns.bps.cktj.service;
 
+import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -46,10 +47,16 @@ public class DepositService {
         }
 
         // 如果前端未设置时间，则设置默认日期
-        if (deposit.getDate() == null ){
+        if (deposit.getStartDate() == null && deposit.getEndDate() == null){
             deposit.setStartDate(userUtils.getMaxDepositCurrDate());
             deposit.setEndDate(deposit.getStartDate());
         }
+        if (deposit.getStartDate() == null && deposit.getEndDate() != null) deposit.setStartDate(deposit.getEndDate());
+        if (deposit.getEndDate() == null && deposit.getStartDate() != null) deposit.setEndDate(deposit.getStartDate());
+        if (deposit.getStartDate().after(deposit.getEndDate())) throw new RuntimeException("起始日期大于终止日期");
+        long days = DateUtil.between(deposit.getStartDate(), deposit.getEndDate(), DateUnit.DAY) + 1;
+        if (days >= 31) throw new RuntimeException("最长的跨度区间不得超过31天");
+
 
         if (deposit.getDepositType().equals("DEPOSIT_TYPE_ACCOUNTING_WAY")) {
             deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo", "u"));     //核心系统存款
@@ -156,10 +163,16 @@ public class DepositService {
         }
 
         // 如果前端未设置时间，则设置默认日期
-        if (deposit.getDate() == null ){
+        if (deposit.getStartDate() == null && deposit.getEndDate() == null){
             deposit.setStartDate(userUtils.getMaxDepositCurrDate());
             deposit.setEndDate(deposit.getStartDate());
         }
+
+        if (deposit.getStartDate() == null && deposit.getEndDate() != null) deposit.setStartDate(deposit.getEndDate());
+        if (deposit.getEndDate() == null && deposit.getStartDate() != null) deposit.setEndDate(deposit.getStartDate());
+        if (deposit.getStartDate().after(deposit.getEndDate())) throw new RuntimeException("起始日期大于终止日期");
+        long days = DateUtil.between(deposit.getStartDate(), deposit.getEndDate(), DateUnit.DAY) + 1;
+        if (days >= 31) throw new RuntimeException("最长的跨度区间不得超过31天");
 
         //分页获取员工列表以及员工总数
         deposit.getPage().setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
@@ -167,16 +180,16 @@ public class DepositService {
         Long total = depositDao.findTaskEmployeePageCount(deposit);
 
         if (deposit.getDepositType().equals("DEPOSIT_TYPE_ACCOUNTING_WAY")) {
-            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo", "u"));     //核心系统存款
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/empaveragetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo", "u"));     //核心系统存款
         } else {
-            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/employeetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo,blo", "u")); //汇总或调离或调入存款
+            deposit.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/cktj/deposit/empaveragetask").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "dpo,blo", "u")); //汇总或调离或调入存款
         }
 
         //获取员工对应的分成信息列表
         List<Deposit> tellerDepositList = new ArrayList<>();
         for (String tellerCode : tellerList){
             deposit.setTellerCode(tellerCode);
-            tellerDepositList.addAll(depositDao.findEmployeeDepositList(deposit));
+            tellerDepositList.addAll(depositDao.findEmployeeAvgDepositList(deposit));
         }
 
         depositPageData.setTotal(total);

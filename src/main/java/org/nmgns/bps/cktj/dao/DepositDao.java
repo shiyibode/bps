@@ -15,6 +15,8 @@ public interface DepositDao {
 
     List<String> findTaskEmployeePage(Deposit deposit);
 
+    List<Deposit> findEmployeeAvgDepositList(Deposit deposit);
+
 
 
 

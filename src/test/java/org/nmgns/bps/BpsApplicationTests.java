@@ -45,10 +45,10 @@ class BpsApplicationTests {
 //        PageData<User> userPage = userService.getUserListPage(1);
 //        System.out.println(userPage.getTotal());
 
-//        DateTime start = DateUtil.parseDate("2023-01-01");
-//        DateTime end = DateUtil.parseDate("2023-01-31");
-//        long days = DateUtil.between(start, end, DateUnit.DAY);
-//        System.out.println(days);
+        DateTime start = DateUtil.parseDate("2023-01-03");
+        DateTime end = DateUtil.parseDate("2023-02-01");
+        long days = DateUtil.between(end, start, DateUnit.DAY) + 1;
+        System.out.println(days);
     }
 
 }
