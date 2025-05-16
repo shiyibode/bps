@@ -25,6 +25,10 @@ public interface DepositDao {
 
     List<Deposit> findEmployeeAvgPaymentDepositList(Deposit deposit);
 
+    List<Deposit> findOrganizationTaskDepositList(Deposit deposit);
+
+    List<Deposit> findOrganizationAvgTaskDepositList(Deposit deposit);
+
 
 
 

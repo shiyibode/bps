@@ -540,5 +540,99 @@
         ORDER BY dp_category_id
     </select>
 
+    <!-- 机构任务时点 -->
+    <select id="findOrganizationTaskDepositList" parameterType="org.nmgns.bps.cktj.entity.Deposit" resultType="org.nmgns.bps.cktj.entity.Deposit" >
+        SELECT
+            <include refid="orgDepositColumns"/>
+        FROM
+            bps_78000.t_cktj_organization_deposit_task_detail a
+            LEFT JOIN bps_78000.t_cktj_deposit_category dc on dc.id = a.dp_category_id
+            LEFT JOIN bps_78000.t_cktj_deposit_category pdc on pdc.id = dc.parent_id
+            LEFT JOIN public.t_sys_organization dpo on dpo.code = a.dp_org_code
+            LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_ACCOUNTING_WAY' ">
+                        ( dpo.id = #{organizationId} OR dpo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 汇总存款: 核心存款 + 调入存款 - 调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_MANAGE_WAY' ">
+                        ( blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 调入存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_IN' ">
+                        (dpo.id != #{organizationId}  AND blo.id = #{organizationId} )
+                    </when>
+                    <!-- 调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_OUT' ">
+                        (dpo.id = #{organizationId} AND blo.id != #{organizationId}  )
+                    </when>
+                </choose>
+            </if>
+            <if test="dpOrgCode != null and dpOrgCode != ''">
+                AND a.dp_org_code = #{dpOrgCode}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        ORDER BY a.date DESC, dp_category_id
+    </select>
+
+    <!--    机构任务日均-->
+    <select id="findOrganizationAvgTaskDepositList" parameterType="org.nmgns.bps.cktj.entity.Deposit" resultType="org.nmgns.bps.cktj.entity.Deposit" >
+        SELECT
+            <include refid="avgOrgDepositColumns"/>
+        FROM
+            bps_78000.t_cktj_organization_deposit_task_detail a
+            LEFT JOIN bps_78000.t_cktj_deposit_category dc on dc.id = a.dp_category_id
+            LEFT JOIN bps_78000.t_cktj_deposit_category pdc on pdc.id = dc.parent_id
+            LEFT JOIN public.t_sys_organization dpo on dpo.code = a.dp_org_code
+            LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_ACCOUNTING_WAY' ">
+                        ( dpo.id = #{organizationId} OR dpo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 汇总存款: 核心存款 + 调入存款 - 调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_MANAGE_WAY' ">
+                        ( blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 调入存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_IN' ">
+                        (dpo.id != #{organizationId}  AND blo.id = #{organizationId} )
+                    </when>
+                    <!-- 调离存款 -->
+                    <when test="depositType != null and depositType == 'DEPOSIT_TYPE_TRANSFER_OUT' ">
+                        (dpo.id = #{organizationId} AND blo.id != #{organizationId}  )
+                    </when>
+                </choose>
+            </if>
+            <if test="dpOrgCode != null and dpOrgCode != ''">
+                AND a.dp_org_code = #{dpOrgCode}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY a.dp_org_code, dp_org_name, a.belong_org_code, belong_org_name, a.dp_category_id, parent_category_name, dp_category_no, dp_category_name
+        ORDER BY dp_category_id
+    </select>
+
+
 
 </mapper>

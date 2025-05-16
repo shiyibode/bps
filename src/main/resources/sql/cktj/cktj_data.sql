@@ -225,11 +225,10 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(123,'员工日均存款-计酬数','/cktj/deposit/empaveragepayment','cktj:deposit:empaveragepayment','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(124,'员工日均存款导出-任务数','/cktj/deposit/exportempavgdeposittask','cktj:deposit:exportempavgdeposittask','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(125,'获取账户自动绑定类型','/cktj/employeeaccount/getAutoBindRule','cktj:employeeaccount:getautobindrule','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('机构时点存款','/cktj/deposit/organization','cktj:deposit:organization','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('机构时点存款导出','/cktj/deposit/exportorgdeposit','cktj:deposit:exportorgdeposit','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('机构日均存款','/cktj/deposit/orgaverage','cktj:deposit:orgaverage','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('机构日均存款导出','/cktj/deposit/exportorgavgdeposit','cktj:deposit:exportorgavgdeposit','手工写入权限',1,now(),1,now());
-insert into bps_78000.t_sys_api (name,uri,permission,remarks,create_by,create_time,update_by,update_time) values('获取存款分类','/cktj/deposit/depositsort','cktj:deposit:depositsort','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(126,'机构时点存款','/cktj/deposit/organizationtask','cktj:deposit:organizationtask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(127,'机构时点存款导出','/cktj/deposit/exportorgdeposittask','cktj:deposit:exportorgdeposittask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(128,'机构日均存款-任务数','/cktj/deposit/orgaveragetask','cktj:deposit:orgaveragetask','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(129,'机构日均存款导出-任务数','/cktj/deposit/exportorgavgdeposittask','cktj:deposit:exportorgavgdeposittask','手工写入权限',1,now(),1,now());
 
 
 
@@ -259,6 +258,10 @@ insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 123, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 124, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 125, 'DATA_SCOPE_ALL', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 126, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 127, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 128, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 129, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
 
 
 

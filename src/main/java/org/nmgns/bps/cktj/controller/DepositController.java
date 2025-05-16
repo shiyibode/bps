@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/cktj/deposit")
@@ -124,6 +125,52 @@ public class DepositController {
             responseJson.setData(depositPageData.getList());
             responseJson.setTotal(depositPageData.getTotal());
             responseJson.setMsg("获取员工的存款日均任务完成情况成功");
+        }catch (Exception e) {
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 分页获取员工的存款任务完成情况
+     * @param deposit 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:deposit:organizationtask')")
+    @RequestMapping(value = "/organizationtask")
+    public ResponseJson getOrgDepositTaskList(@RequestBody Deposit deposit) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Deposit> depositData = depositService.findOrganizationTaskDepositList(deposit);
+            responseJson.setSuccess(true);
+            responseJson.setData(depositData);
+            responseJson.setMsg("获取机构的存款任务完成情况成功");
+        }catch (Exception e) {
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+
+        return responseJson;
+    }
+
+    /**
+     * 分页获取员工的日均存款任务完成情况
+     * @param deposit 包含分页信息
+     */
+    @PreAuthorize("hasAuthority('cktj:deposit:orgaveragetask')")
+    @RequestMapping(value = "/orgaveragetask")
+    public ResponseJson getOrganizationAvgDepositTaskList(@RequestBody Deposit deposit) {
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            List<Deposit> depositData = depositService.findOrganizationTaskDepositAvgList(deposit);
+            responseJson.setSuccess(true);
+            responseJson.setData(depositData);
+            responseJson.setMsg("获取机构的存款日均任务完成情况成功");
         }catch (Exception e) {
             e.printStackTrace();
             responseJson.setSuccess(false);
