@@ -23,6 +23,7 @@
             *
         from bps_78000.t_sys_menu
         where del_flag = false
+        order by sort
     </select>
 
     <select id="getMenuById" resultType="org.nmgns.bps.system.entity.Menu" >

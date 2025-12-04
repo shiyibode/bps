@@ -196,11 +196,17 @@ public class MenuService {
             List<Menu> childPermissionMenu = new ArrayList<>();
 
             // 过滤权限-判断用户是否拥有该按钮
-            List<Menu> menuList = menuDao.getMenuListByUserId(userUtils.getCurrentLoginedUser().getId());
-            for (Menu menu : childPermissionMenuList){
-                for (Menu m: menuList){
-                    if(menu.getId().equals(m.getId())){
-                        childPermissionMenu.add(menu);
+            User currentUser = userUtils.getCurrentLoginedUser();
+            // 超级用户获得全部按钮，普通用户校验是否有该菜单
+            if (currentUser.isAdmin()){
+                childPermissionMenu.addAll(childPermissionMenuList);
+            }else {
+                List<Menu> menuList = menuDao.getMenuListByUserId(currentUser.getId());
+                for (Menu menu : childPermissionMenuList){
+                    for (Menu m: menuList){
+                        if(menu.getId().equals(m.getId())){
+                            childPermissionMenu.add(menu);
+                        }
                     }
                 }
             }
