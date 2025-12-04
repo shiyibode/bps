@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ynsh.ims.modules.dktj.dao.TemplateDao">
+
+    <!-- 获取当前可用的模板列表-->
+    <select id="findAvailableTemplateList" resultType="org.nmgns.bps.dktj.entity.Template">
+        SELECT * FROM bps_78000.t_dktj_template WHERE valid_flag = TRUE ;
+    </select>
+
+    <!-- 获取指定模板下的岗位列表及分成比例-->
+    <select id="findTemplateDetailListByTemplateId" resultType="org.nmgns.bps.dktj.entity.TemplateDetail">
+        SELECT
+            a.*,
+            fun_dktj_get_most_possible_position_teller_code(#{accountNo},#{templateId},a.position_id) AS teller_code,
+            p.name AS "position.name",
+            p.type AS "position.type"
+        FROM bps_78000.t_dktj_template_detail a LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id WHERE a.template_id = #{templateId};
+    </select>
+
+    <!-- 获取指定模板岗位对照的详细信息 -->
+    <select id="findTemplateDetailInfoById" resultType="org.nmgns.bps.dktj.entity.TemplateDetail">
+        SELECT
+            a.*,
+            p.name AS "position.name",
+            p.type AS "position.type"
+        FROM bps_78000.t_dktj_template_detail a LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id WHERE a.id = #{id};
+    </select>
+
+    <!--写入账号与模板对应信息-->
+    <insert id="insertAccountTemplate" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bps_78000.t_dktj_account_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="accountNo != null and accountNo != ''">
+                account_no,
+            </if>
+            <if test="template != null and template.id != null">
+                template_id,
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                org_code,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="endDate != null" >
+                end_date,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="validFlag != null">
+                valid_flag,
+            </if>
+            <if test="checkStatus != null and checkStatus !='' ">
+                check_status,
+            </if>
+            <if test="remarks != null and remarks != ''">
+                remarks,
+            </if>
+            <if test="createTime != null" >
+                create_time,
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                create_by
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="accountNo != null and accountNo != ''">
+                #{accountNo},
+            </if>
+            <if test="template != null and template.id != null">
+                #{template.id},
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                #{orgCode},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="endDate != null" >
+                #{endDate},
+            </if>
+            <if test="parentId != null">
+                #{parentId},
+            </if>
+            <if test="validFlag != null">
+                #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                #{checkStatus},
+            </if>
+            <if test="remarks != null and remarks != ''">
+                #{remarks},
+            </if>
+            <if test="createTime != null" >
+                #{createTime},
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                #{createBy.id}
+            </if>
+        </trim>
+    </insert>
+
+    <!--写入账号-岗位-柜员对应信息表-->
+    <insert id="insertAccountShareInfo" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        INSERT INTO bps_78000.t_dktj_account_share_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="accountTemplate != null and accountTemplate.id != null">
+                account_template_id,
+            </if>
+            <if test="templateDetail != null and templateDetail.id != null">
+                template_detail_id,
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                teller_code,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="endDate != null" >
+                end_date,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="validFlag != null">
+                valid_flag,
+            </if>
+            <if test="remarks != null and remarks != ''">
+                remarks,
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                check_status,
+            </if>
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                alter_check_status,
+            </if>
+            <if test="alterCheckTeller != null and alterCheckTeller != ''">
+                alter_check_teller,
+            </if>
+            <if test="createTime != null" >
+                create_time,
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                create_by
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="accountTemplate != null and accountTemplate.id != null">
+                #{accountTemplate.id},
+            </if>
+            <if test="templateDetail != null and templateDetail.id != null">
+                #{templateDetail.id},
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                #{tellerCode},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="endDate != null" >
+                #{endDate},
+            </if>
+            <if test="parentId != null">
+                #{parentId},
+            </if>
+            <if test="validFlag != null">
+                #{validFlag},
+            </if>
+            <if test="remarks != null and remarks != ''">
+                #{remarks},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                #{checkStatus},
+            </if>
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                #{alterCheckStatus},
+            </if>
+            <if test="alterCheckTeller != null and alterCheckTeller != ''">
+                #{alterCheckStatus},
+            </if>
+            <if test="createTime != null" >
+                #{createTime},
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                #{createBy.id}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 通过贷款账号获取账号模板对应信息 -->
+    <select id="findAccountTemplateListByAccountNo" resultType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        SELECT
+            *
+        FROM bps_78000.t_dktj_account_template
+        WHERE account_no = #{accountNo} AND org_code = #{orgCode} ;
+    </select>
+
+    <!-- 通过贷款账号获取当前最新的账号模板对应信息 -->
+    <select id="findAccountCurrentTemplateByAccountNo" resultType="org.nmgns.bps.dktj.entity.AccountTemplate" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        SELECT
+            *
+        FROM bps_78000.t_dktj_account_template
+        WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND valid_flag = TRUE AND check_status = #{CHECK_STATUS_CHECKED}
+    </select>
+
+    <!-- 通过账号模板id获取该账号的推荐人分成信息 -->
+    <select id="findAccountShareInfoByAccountTemplateId" resultType="org.nmgns.bps.dktj.entity.AccountShareInfo" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        SELECT
+            s.*
+        FROM bps_78000.t_dktj_account_share_info s
+            LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+            LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+        WHERE s.account_template_id = #{accountTemplateId} AND p.type = #{position.POSITION_TYPE_TUI_JIAN_REN} AND s.valid_flag = TRUE ;
+    </select>
+
+    <!-- 通过账号模板id获取该账号的未复核的变更推荐人分成信息 -->
+    <select id="findUncheckedAccountShareInfoByAccountTemplateId" resultType="org.nmgns.bps.dktj.entity.AccountShareInfo" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        SELECT
+            s.*
+        FROM bps_78000.t_dktj_account_share_info s
+            LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+            LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+        WHERE s.account_template_id = #{accountTemplateId} AND p.type = #{position.POSITION_TYPE_TUI_JIAN_REN} AND s.valid_flag = FALSE AND end_date IS NULL AND s.check_status = #{CHECK_STATUS_UNCHECKED};
+    </select>
+
+    <!-- 复核拒绝维护人时删除账号与模板对应信息 -->
+    <delete id="deleteAccountTemplateById" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        DELETE FROM bps_78000.t_dktj_account_template WHERE id = #{id}
+    </delete>
+
+    <!-- 复核拒绝维护人时删除账号分成规则信息 -->
+    <delete id="deleteAccountShareInfoByAccountTemplateId" parameterType="java.lang.Long">
+        DELETE FROM bps_78000.t_dktj_account_share_info WHERE account_template_id = #{accountTemplateId}
+    </delete>
+
+    <!-- 变更复核拒绝维护人时删除账号分成规则信息 -->
+    <delete id="deleteAccountShareInfoById" parameterType="java.lang.Long">
+        DELETE FROM bps_78000.t_dktj_account_share_info WHERE id = #{id}
+    </delete>
+
+    <update id="updateAccountShareInfoById" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        UPDATE bps_78000.t_dktj_account_share_info
+        <set>
+            <if test="startDate != null">
+                start_date = #{startDate},
+            </if>
+                end_date = #{endDate},
+            <if test="remarks != null and remarks != ''">
+                remarks = #{remarks},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                check_status = #{checkStatus},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="updateBy != null and updateBy.id != null">
+                update_by = #{updateBy.id},
+            </if>
+            <if test="alterCheckStatus != null">
+                alter_check_status = #{alterCheckStatus},
+            </if>
+            <if test="alterCheckTeller != null">
+                alter_check_teller = #{alterCheckTeller},
+            </if>
+            <if test="validFlag != null">
+                valid_flag = #{validFlag}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 获取模板中的推荐人的templateDetailId -->
+    <select id="getTemplateDetailIdByTemplateId" resultType="java.lang.Long" parameterType="org.nmgns.bps.dktj.entity.TemplateDetail">
+        SELECT
+            a.id
+        FROM
+            bps_78000.t_dktj_template_detail a
+            LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        WHERE
+            a.template_id = #{templateId} AND p.type = #{position.POSITION_TYPE_TUI_JIAN_REN};
+    </select>
+
+    <select id="findAccountTemplateListCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+
+        select
+            count(*)
+        from
+            bps_78000.t_dktj_account_template dat
+            left join bps_78000.t_dktj_template t on dat.template_id = t.id
+            left join bps_78000.t_dktj_employee_customer ec on ec.account_no = dat.account_no and ec.org_code = dat.org_code
+            LEFT JOIN t_sys_organization o on dat.org_code = o.code
+        <where>
+            dat.valid_flag = true and ec.valid_flag = true
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ec.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND ec.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ec.identity_no = #{identityNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND dat.account_no = #{accountNo}
+            </if>
+        </where>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+
+    </select>
+
+    <select id="findAccountTemplateList" resultType="org.nmgns.bps.dktj.entity.AccountTemplate" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        select
+            dat.id,
+            dat.account_no,
+            ec.id as employee_customer_id,
+            ec.customer_name,
+            ec.account_open_date,
+            ec.identity_no,
+            ec.xd_customer_no,
+            dat.org_code,
+            dat.template_id,
+            t.name as template_name,
+            dat.start_date
+        from
+            bps_78000.t_dktj_account_template dat
+            left join bps_78000.t_dktj_template t on dat.template_id = t.id
+            left join bps_78000.t_dktj_employee_customer ec on ec.account_no = dat.account_no and ec.org_code = dat.org_code
+            LEFT JOIN t_sys_organization o on dat.org_code = o.code
+        <where>
+            dat.valid_flag = true and ec.valid_flag = true
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ec.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND ec.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ec.identity_no = #{identityNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND dat.account_no = #{accountNo}
+            </if>
+        </where>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+        <choose>
+            <when test="page !=null and page.sorters != null">
+                ORDER BY
+                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
+                    ${sorter.property} ${sorter.direction}
+                </foreach>
+            </when>
+            <otherwise>
+                ORDER BY dat.start_date DESC,dat.account_no asc
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <select id="getValidAccountShareInfoByAccountTemplateId" resultType="org.nmgns.bps.dktj.entity.AccountShareInfo" parameterType="java.lang.Long">
+        SELECT * FROM bps_78000.t_dktj_account_share_info WHERE account_template_id = #{accountTemplateId} AND valid_flag = true
+    </select>
+
+    <update id="updateAccountTemplateById" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        UPDATE bps_78000.t_dktj_account_template
+        <set>
+            <if test="templateId != null " >
+                template_id = #{templateId},
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code = #{orgCode},
+            </if>
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="parentId != null" >
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                check_status = #{checkStatus},
+            </if>
+            <if test="updateTime != null " >
+                update_time = #{updateTime},
+            </if>
+            <if test="updateBy != null and updateBy.id != null" >
+                update_by = #{updateBy.id}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

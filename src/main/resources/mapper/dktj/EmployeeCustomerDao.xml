@@ -1,0 +1,1601 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.nmgns.bps.dktj.dao.EmployeeCustomerDao">
+
+    <sql id="employeeCustomerColumns">
+        uc.xd_customer_no,
+        uc.customer_name,
+        uc.start_date,
+        uc.org_code,
+        uc.identity_type,
+        uc.identity_no,
+        uc.customer_type,
+        uc.flag,
+        o.id AS organization_id,
+        o.name AS organization_name
+    </sql>
+
+    <sql id="employeeCustomerColumns2">
+        coas.status,
+        o.id AS organization_id,
+        o.name AS organization_name
+    </sql>
+
+    <sql id="employeeAccountColumns">
+        uc.xd_customer_no,
+        uc.customer_name,
+        uc.start_date,
+        uc.org_code,
+        uc.identity_type,
+        uc.identity_no,
+        uc.customer_type,
+        uc.flag,
+        o.id AS organization_id,
+        o.name AS organization_name
+    </sql>
+    
+    <sql id="employeeColumns">
+        su.name AS teller_name,
+        so.code AS teller_org_code,
+        so.name AS teller_org_name,
+    </sql>
+
+    <!-- 当维护人发生变更是，获取原维护人信息字段 -->
+    <sql id="parentEmployeeCustomerColumns">
+        eco.teller_code AS old_teller_code,
+        psu.name AS old_teller_name,
+    </sql>
+
+    <sql id="employeeJoins">
+        LEFT JOIN public.t_sys_user su ON su.code = ec.teller_code
+        LEFT JOIN public.t_sys_user_organization suo ON suo.user_id = su.id AND suo.status = 1
+        LEFT JOIN public.t_sys_organization so ON so.id = suo.organization_id
+    </sql>
+
+    <!-- 获取原维护人柜员号和姓名 -->
+    <sql id="parentEmployeeCustomerJoins">
+        LEFT JOIN bps_78000.t_dktj_employee_customer eco ON eco.id = ec.parent_id
+        LEFT JOIN public.t_sys_user psu ON psu.code = eco.teller_code
+    </sql>
+
+    <!-- 获取未登记维护人的账户的总数 -->
+    <select id="findUnregisterCustomerCount" resultType="Long" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+            count(1)
+        FROM (select a.*,s.status from bps_78000.t_dktj_unbound_customer a LEFT JOIN bps_78000.t_dktj_customer_status s ON a.xd_customer_no = s.xd_customer_no AND a.org_code = s.org_code AND s.valid_flag = true ) as t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        <where>
+            <if test="organizationId != null">
+                (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != '' ">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <!-- 数据范围过滤 -->
+             ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <!-- 获取未登记揽储人的客户列表 -->
+    <!-- group by中的flag标志可以加入，因为如果是新客户flag=1，就不可能再有释放客户flag=2存在；反之，如果是释放客户，就不可能是新客户 -->
+    <select id="findUnregisterCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+          t.*,
+          fun_dktj_get_most_possible_teller_code(t.xd_customer_no,t.org_code) AS teller_code,
+          o.name as organization_name
+        FROM (select a.*,s.status from bps_78000.t_dktj_unbound_customer a LEFT JOIN bps_78000.t_dktj_customer_status s ON a.xd_customer_no = s.xd_customer_no AND a.org_code = s.org_code AND s.valid_flag = true) as t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        <where>
+            <if test="organizationId != null" >
+                (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <!-- 搜索条件 -->
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY t.date ASC, t.org_code ASC, t.xd_customer_no ASC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 通过信贷客户号查找未绑定客户的完整信息(一个客户在一个机构只有一个status) 不包含贷款账号信息，只包含客户信息，只返回一条记录-->
+<!--    <select id="getUnboundCustomerInfoByXdCustomerNo" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT t.*,cs.status-->
+<!--        FROM (-->
+<!--            select-->
+<!--                   xd_customer_no,-->
+<!--                   customer_name,-->
+<!--                   date,-->
+<!--                   identity_no,-->
+<!--                   customer_type,-->
+<!--                   identity_type,-->
+<!--                   count(*) as account_count,-->
+<!--                   org_code,flag-->
+<!--            from-->
+<!--                 bps_78000.t_dktj_unbound_customer-->
+<!--            group by xd_customer_no,customer_name,date,identity_no,customer_type,identity_type,org_code,flag-->
+<!--            ) as t-->
+<!--        LEFT JOIN-->
+<!--            bps_78000.t_dktj_customer_status cs ON t.xd_customer_no = cs.xd_customer_no AND t.org_code = cs.org_code AND cs.valid_flag = true-->
+<!--        WHERE t.xd_customer_no = #{1} AND t.org_code = #{0} AND t.date &gt;= coalesce(cs.start_date,'1900-01-01') AND t.date &lt;= coalesce(cs.end_date,'2099-12-31')-->
+<!--    </select>-->
+
+    <!-- 通过贷款账号查找未绑定客户的完整信息(一个客户在一个机构只有一个status) 包含贷款账号信息，只能返回一条纪律-->
+    <select id="getUnboundCustomerInfoByAccountNo" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+            t.account_no,
+            t.xd_customer_no,
+            t.customer_name,
+            t.account_open_date,
+            t.date,
+            t.identity_no,
+            t.customer_type,
+            t.identity_type,
+            t.org_code,
+            t.account_open_date,
+            t.flag,
+            cs.status
+        FROM bps_78000.t_dktj_unbound_customer t
+                 LEFT JOIN bps_78000.t_dktj_customer_status cs ON t.xd_customer_no = cs.xd_customer_no AND t.org_code = cs.org_code AND cs.valid_flag = true
+        WHERE t.account_no = #{1} AND t.org_code = #{0}
+    </select>
+
+    <!-- 通过贷款账号查找未绑定客户的完整信息(一个客户在一个机构只有一个status) 包含贷款账号信息，只能返回一条纪律-->
+    <select id="getCustomerStatus" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus" resultType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        SELECT
+            *
+        FROM bps_78000.t_dktj_customer_status
+        WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode}
+    </select>
+
+    <!-- 通过信贷客户号、机构号获取客户当前在该机构的固定/流动状态-->
+    <select id="getAccountCount" resultType="java.lang.Integer">
+        SELECT
+            count(*)
+        FROM bps_78000.t_dktj_employee_customer WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode}
+    </select>
+
+    <!-- 登记维护人 -->
+    <insert id="insertEmployeeCustomer" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bps_78000.t_dktj_employee_customer
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orgCode != null and orgCode != ''">
+                org_code,
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                account_no,
+            </if>
+            <if test="accountOpenDate != null ">
+                account_open_date,
+            </if>
+            <if test="customerName != null and customerName != ''">
+                customer_name,
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                xd_customer_no,
+            </if>
+            <if test="hxCustomerNo != null and hxCustomerNo != ''" >
+                hx_customer_no,
+            </if>
+            <if test="customerType != null and customerType != ''" >
+                customer_type,
+            </if>
+            <if test="identityType != null and identityType != ''" >
+                identity_type,
+            </if>
+            <if test="identityNo != null and identityNo != ''" >
+                identity_no,
+            </if>
+            <if test="tellerCode != null and tellerCode != ''" >
+                teller_code,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="endDate != null" >
+                end_date,
+            </if>
+            <if test="validFlag != null">
+                valid_flag,
+            </if>
+            <if test="registerType != null and registerType != ''" >
+                register_type,
+            </if>
+            <if test="registerCheckStatus != null and registerCheckStatus != ''">
+                register_check_status,
+            </if>
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                alter_check_status,
+            </if>
+            <if test="opTellerCode != null and opTellerCode != ''" >
+                op_teller_code,
+            </if>
+            <if test="createTime != null" >
+                create_time,
+            </if>
+            <if test="registerCheckTellerCode != null and registerCheckTellerCode != ''" >
+                register_check_teller_code,
+            </if>
+            <if test="registerCheckTime != null" >
+                register_check_time,
+            </if>
+            <if test="alterCheckTellerCode != null and alterCheckTellerCode != ''" >
+                alter_check_teller_code,
+            </if>
+            <if test="alterCheckTime != null" >
+                alter_check_time,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="boundType != null">
+                bound_type,
+            </if>
+            <if test="remarks != null and remarks != ''">
+                remarks
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="orgCode != null and orgCode != ''">
+                #{orgCode},
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                #{accountNo},
+            </if>
+            <if test="accountOpenDate != null">
+                #{accountOpenDate},
+            </if>
+            <if test="customerName != null and customerName != ''">
+                #{customerName},
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                #{xdCustomerNo},
+            </if>
+            <if test="hxCustomerNo != null and hxCustomerNo != ''" >
+                #{hxCustomerNo},
+            </if>
+            <if test="customerType != null and customerType != ''" >
+                #{customerType},
+            </if>
+            <if test="identityType != null and identityType != ''" >
+                #{identityType},
+            </if>
+            <if test="identityNo != null and identityNo != ''" >
+                #{identityNo},
+            </if>
+            <if test="tellerCode != null and tellerCode != ''" >
+                #{tellerCode},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="endDate != null" >
+                #{endDate},
+            </if>
+            <if test="validFlag != null">
+                #{validFlag},
+            </if>
+            <if test="registerType != null and registerType != ''" >
+                #{registerType},
+            </if>
+            <if test="registerCheckStatus != null and registerCheckStatus != ''">
+                #{registerCheckStatus},
+            </if>
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                #{alterCheckStatus},
+            </if>
+            <if test="opTellerCode != null and opTellerCode != ''" >
+                #{opTellerCode},
+            </if>
+            <if test="createTime != null" >
+                #{createTime},
+            </if>
+            <if test="registerCheckTellerCode != null and registerCheckTellerCode != ''" >
+                #{registerCheckTellerCode},
+            </if>
+            <if test="registerCheckTime != null" >
+                #{registerCheckTime},
+            </if>
+            <if test="alterCheckTellerCode != null and alterCheckTellerCode != ''" >
+                #{alterCheckTellerCode},
+            </if>
+            <if test="alterCheckTime != null" >
+                #{alterCheckTime},
+            </if>
+            <if test="parentId != null">
+                #{parentId},
+            </if>
+            <if test="boundType != null">
+                #{boundType},
+            </if>
+            <if test="remarks != null and remarks != ''">
+                #{remarks}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 通过信贷客户号删除未绑定到员工的客户（用于提交绑定申请后删除bps_78000.t_dktj_unbound_customer表中记录） -->
+    <delete id="deleteUnboundCustomerInfoByXdCustomerNo" >
+        DELETE FROM bps_78000.t_dktj_unbound_customer WHERE xd_customer_no = #{1} AND org_code = #{0} and account_no = #{2}
+    </delete>
+
+
+    <!-- 通过信贷客户号获取复核通过且生效的客户与员工关联记录 -->
+<!--    <select id="getValidEmployeeCustomerInfoListByXdCustomerNo" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT ec.*,-->
+<!--               coas.status-->
+<!--        FROM bps_78000.t_dktj_employee_customer ec-->
+<!--                 LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE AND coas.org_code = ec.org_code-->
+<!--                 LEFT JOIN public.t_sys_organization o ON coas.org_code = o.code-->
+<!--        WHERE ec.xd_customer_no = #{xdCustomerNo} AND ec.org_code = #{orgCode} AND ec.valid_flag = TRUE-->
+<!--    </select>-->
+
+    <!-- 通过信贷客户号获取复核通过且生效的客户与员工关联记录 -->
+<!--    <select id="getValidEmployeeCustomerInfoByXdCustomerNo" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT ec.*,-->
+<!--        coas.org_code,-->
+<!--        coas.status,-->
+<!--        CASE ec.customer_type WHEN '1' THEN cpi.identity_no ELSE cci.license_no END AS identity_no,-->
+<!--        CASE ec.customer_type WHEN '1' THEN cpi.cn_name ELSE cci.cn_name END AS customer_name-->
+<!--        FROM bps_78000.t_dktj_employee_customer ec-->
+<!--        LEFT JOIN t_ods_s02_cicustbasinfo cci ON ec.xd_customer_no = cci.customer_no-->
+<!--        LEFT JOIN t_ods_s02_cipersonbasinfo cpi ON ec.xd_customer_no = cpi.customer_no-->
+<!--        LEFT JOIN bps_78000.t_dktj_customer_org_and_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE-->
+<!--        LEFT JOIN public.t_sys_organization o ON coas.org_code = o.code-->
+<!--        WHERE ec.xd_customer_no = #{xdCustomerNo} AND ec.valid_flag = TRUE AND ec.check_status=#{CHECKED_STATUS_CHECKED} AND coas.valid_flag = TRUE-->
+<!--    </select>-->
+
+    <!-- bps_78000.t_dktj_employee_customer 表相关操作 -->
+    <!-- 获取已登记维护人但未复核的客户总数 -->
+    <select id="findRegisterUncheckedCustomerCount" resultType="Long" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        count(1)
+        FROM
+        (
+            SELECT
+                   id,
+                   xd_customer_no,
+                   account_no,
+                   org_code,
+                   customer_name,
+                   customer_type,
+                   identity_type,
+                   identity_no,
+                   teller_code,
+                   start_date,
+                   op_teller_code,
+                   register_type,
+                    register_check_status
+            FROM
+                bps_78000.t_dktj_employee_customer
+            WHERE register_check_status = #{CHECKED_STATUS_UNCHECKED}
+--                 group by xd_customer_no, org_code, customer_name, customer_type, identity_type, identity_no, teller_code, start_date,op_teller_code,register_type,register_check_status
+        ) t
+        LEFT JOIN bps_78000.t_dktj_customer_status cs ON t.xd_customer_no = cs.xd_customer_no AND cs.valid_flag = true AND t.org_code = cs.org_code
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+            suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <!-- 获取已登记维护人但未复核的账户列表 -->
+    <select id="findRegisterUncheckedCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        t.*,
+        su.name as teller_name,
+        uo.code as teller_org_code,
+        uo.name as teller_org_name,
+        o.id AS organization_id,
+        o.name AS organization_name,
+        cs.status
+        FROM
+        (
+            SELECT
+                id,
+                xd_customer_no,
+                account_no,
+                org_code,
+                customer_name,
+                customer_type,
+                identity_type,
+                identity_no,
+                teller_code,
+                start_date,
+                op_teller_code,
+                register_type,
+                register_check_status
+            FROM
+                bps_78000.t_dktj_employee_customer
+            WHERE register_check_status = #{CHECKED_STATUS_UNCHECKED}
+--                 group by xd_customer_no, org_code, customer_name, customer_type, identity_type, identity_no, teller_code, start_date,op_teller_code,register_type,register_check_status
+        ) t
+        LEFT JOIN bps_78000.t_dktj_customer_status cs ON t.xd_customer_no = cs.xd_customer_no AND cs.valid_flag = true AND cs.org_code = t.org_code
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+             suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY t.start_date DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 复核通过维护人 -->
+    <update id="checkRegisterEmployee" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        UPDATE bps_78000.t_dktj_employee_customer
+        SET register_check_status = #{CHECKED_STATUS_CHECKED}, register_check_teller_code = #{registerCheckTellerCode}, register_check_time = #{registerCheckTime}, valid_flag = TRUE
+        WHERE id = #{id} and account_no = #{accountNo} AND org_code = #{orgCode} AND register_check_status = #{CHECKED_STATUS_UNCHECKED}
+    </update>
+
+    <!-- 通过贷款账号查找未复核客户的完整信息 -->
+    <select id="getUncheckedCustomerInfoByAccountNo" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT ec.*
+        FROM bps_78000.t_dktj_employee_customer ec
+        WHERE ec.id = #{id} and ec.account_no = #{accountNo} and ec.org_code = #{orgCode} AND ec.register_check_status = #{CHECKED_STATUS_UNCHECKED} AND ec.register_check_teller_code IS NULL AND ec.register_check_time IS NULL And ec.org_code = #{orgCode}
+    </select>
+
+    <!-- 通过贷款账号查找该笔贷款当前的维护人 -->
+    <select id="getAccountInfoByAccountNo" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT ec.*,cs.status
+        FROM bps_78000.t_dktj_employee_customer ec
+            LEFT JOIN bps_78000.t_dktj_customer_status cs ON cs.org_code = ec.org_code AND ec.xd_customer_no = cs.xd_customer_no AND cs.valid_flag = true
+        WHERE ec.account_no = #{accountNo} AND ec.org_code = #{orgCode} AND ec.valid_flag = true
+    </select>
+
+    <!-- 复核拒绝维护人时删除bps_78000.t_dktj_employee_customer表中的记录 --> <!-- 20201218日发现bug，复核拒绝时会删除全部账号，应该是只删除提交登记未复核的记录 -->
+    <delete id="deleteRegisterEmployee" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        DELETE FROM bps_78000.t_dktj_employee_customer WHERE id = #{id} AND account_no = #{accountNo} AND register_check_status = #{CHECKED_STATUS_UNCHECKED}
+    </delete>
+
+    <!-- 复核拒绝时，恢复bps_78000.t_dktj_unbound_customer表中的记录 -->
+    <insert id="insertUnboundCustomer" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        INSERT INTO bps_78000.t_dktj_unbound_customer
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                xd_customer_no,
+            </if>
+            <if test="accountNo != null and accountNo != ''" >
+                account_no,
+            </if>
+            <if test="accountOpenDate != null " >
+                account_open_date,
+            </if>
+            <if test="customerName != null and customerName != ''" >
+                customer_name,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code,
+            </if>
+            <if test="identityType != null and identityType != ''" >
+                identity_type,
+            </if>
+            <if test="identityNo != null and identityNo != ''" >
+                identity_no,
+            </if>
+            <if test="customerType != null and customerType != ''" >
+                customer_type,
+            </if>
+            <if test="date != null" >
+                date,
+            </if>
+            <if test="createTime != null " >
+                create_time,
+            </if>
+            <if test="flag != null and flag != ''" >
+                flag
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                #{xdCustomerNo},
+            </if>
+            <if test="accountNo != null and accountNo != ''" >
+                #{accountNo},
+            </if>
+            <if test="accountOpenDate != null " >
+                #{accountOpenDate},
+            </if>
+            <if test="customerName != null and customerName != ''" >
+                #{customerName},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                #{orgCode},
+            </if>
+            <if test="identityType != null and identityType != ''" >
+                #{identityType},
+            </if>
+            <if test="identityNo != null and identityNo != ''" >
+                #{identityNo},
+            </if>
+            <if test="customerType != null and customerType != ''" >
+                #{customerType},
+            </if>
+            <if test="date != null" >
+                #{date},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="flag != null and flag != ''">
+                #{flag}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 复核拒绝维护人时删除bps_78000.t_dktj_customer_status表中的记录 (新登记客户才会删除，释放客户不会被删除)-->
+    <delete id="deleteCustomerStatus" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        DELETE FROM bps_78000.t_dktj_customer_status WHERE xd_customer_no = #{xdCustomerNo} AND org_code  = #{orgCode}
+    </delete>
+
+    <!-- 获取可变更维护人的客户信息总数 -->
+    <select id="findModifiableCustomerCount" resultType="Long" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+          count(1)
+        FROM
+          bps_78000.t_dktj_employee_customer ec
+          LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = true AND ec.org_code = coas.org_code
+          LEFT JOIN public.t_sys_organization o ON o.code = coas.org_code
+          <include refid="employeeJoins" />
+          <include refid="parentEmployeeCustomerJoins" />
+        WHERE
+          ec.valid_flag = TRUE
+          <if test="organizationId != null" >
+            AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+          </if>
+            <!-- 搜索条件 -->
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND ec.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND ec.account_no = #{accountNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND ec.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND su.name = #{tellerName}
+            </if>
+            <if test="oldTellerCode != null and oldTellerCode != ''">
+                AND pea.teller_code = #{oldTellerCode}
+            </if>
+            <if test="oldTellerName != null and oldTellerName != ''">
+                AND psu.name = #{oldTellerName}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ec.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ec.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND ec.customer_type = #{customerType}
+            </if>
+          <!-- 数据范围过滤 -->
+          ${sqlMap.dsf}
+    </select>
+
+    <!-- 获取可变更维护人的账户信息列表 -->
+    <select id="findModifiableCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+            ec.*,
+            ec.start_date as date,
+            1 AS account_count,
+            eco.teller_code AS old_teller_code,
+            psu.name as old_teller_name,
+          <include refid="employeeColumns" />
+          <include refid="parentEmployeeCustomerColumns" />
+          <include refid="employeeCustomerColumns2" />
+        FROM
+            bps_78000.t_dktj_employee_customer ec
+            LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = true AND ec.org_code = coas.org_code
+            LEFT JOIN public.t_sys_organization o ON o.code = coas.org_code
+            <include refid="employeeJoins" />
+            <include refid="parentEmployeeCustomerJoins" />
+        WHERE
+            ec.valid_flag = TRUE
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <!-- 搜索条件 -->
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND ec.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND ec.account_no = #{accountNo}
+            </if>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND ec.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND su.name = #{tellerName}
+            </if>
+            <if test="oldTellerCode != null and oldTellerCode != ''">
+                AND pea.teller_code = #{oldTellerCode}
+            </if>
+            <if test="oldTellerName != null and oldTellerName != ''">
+                AND psu.name = #{oldTellerName}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND ec.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND ec.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND ec.customer_type = #{customerType}
+            </if>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY ec.start_date DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+          offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 通过id更新维护人信息 -->
+    <update id="updateById" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        UPDATE bps_78000.t_dktj_employee_customer
+        <set>
+            <if test="startDate != null">
+                start_date = #{startDate},
+            </if>
+                end_date = #{endDate},
+            <if test="alterCheckTellerCode != null and alterCheckTellerCode != ''">
+                alter_check_teller_code = #{alterCheckTellerCode},
+            </if>
+            <if test="alterCheckTime != null">
+                alter_check_time = #{alterCheckTime},
+            </if>
+            <if test="remarks != null and remarks != ''">
+                remarks = #{remarks},
+            </if>
+            <if test="alterCheckStatus != null and alterCheckStatus != ''">
+                alter_check_status = #{alterCheckStatus},
+            </if>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null">
+                valid_flag = #{validFlag}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 获取已变更维护人但未复核的账户信息总数 -->
+    <select id="findModifiedUncheckedCustomerCount" resultType="Long" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        count(1)
+        FROM
+        (
+        SELECT
+            ec.*,
+            ec.start_date as date,
+            1 AS account_count,
+            eco.teller_code AS old_teller_code,
+            psu.name as old_teller_name,
+            coas.status
+        FROM
+          bps_78000.t_dktj_employee_customer ec
+          LEFT JOIN bps_78000.t_dktj_employee_customer eco on ec.parent_id = eco.id
+          LEFT JOIN public.t_sys_user psu ON eco.teller_code = psu.code
+          LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = true AND ec.org_code = coas.org_code
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+            t.alter_check_status = #{CHECKED_STATUS_UNCHECKED} AND t.register_type IN (#{REGISTER_TYPE_CHANGED_CUSTOMER})
+            AND suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND su.name = #{tellerName}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <!-- 获取已变更维护人但未复核的账户信息列表 -->
+    <select id="findModifiedUncheckedCustomer" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        t.*,
+        su.name as teller_name,
+        uo.code as teller_org_code,
+        uo.name as teller_org_name,
+        o.id AS organization_id,
+        o.name AS organization_name
+        FROM
+        (
+        SELECT
+            ec.*,
+            ec.start_date as date,
+            1 AS account_count,
+            eco.teller_code AS old_teller_code,
+            psu.name as old_teller_name,
+            coas.status
+        FROM
+          bps_78000.t_dktj_employee_customer ec
+          LEFT JOIN bps_78000.t_dktj_employee_customer eco on ec.parent_id = eco.id
+          LEFT JOIN public.t_sys_user psu ON eco.teller_code = psu.code
+          LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = true AND coas.org_code = ec.org_code
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+            t.alter_check_status = #{CHECKED_STATUS_UNCHECKED} AND t.register_type IN (#{REGISTER_TYPE_CHANGED_CUSTOMER})
+            AND suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND su.name = #{tellerName}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY t.id DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <!-- 通过ID获取维护人与贷款客户关联信息 -->
+    <select id="getEmployeeCustomerById" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+            ec.*,
+            coas.status
+        FROM bps_78000.t_dktj_employee_customer ec
+            LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE AND coas.org_code = ec.org_code
+        WHERE
+            ec.id = #{id}
+    </select>
+
+    <!-- 获取提交了变更申请但是未复核的账户列表 条件是：信贷客户号、机构号、新柜员号相同 -->
+<!--    <select id="getAlterUncheckedEmployeeCustomerInfoListByXdCustomerNo" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT ec.*,-->
+<!--               coas.status-->
+<!--        FROM bps_78000.t_dktj_employee_customer ec-->
+<!--                 LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE AND coas.org_code = ec.org_code-->
+<!--                 LEFT JOIN public.t_sys_organization o ON coas.org_code = o.code-->
+<!--        WHERE ec.xd_customer_no = #{xdCustomerNo} AND ec.org_code = #{orgCode} AND ec.alter_check_status = #{CHECKED_STATUS_UNCHECKED} AND ec.teller_code = #{tellerCode}-->
+<!--    </select>-->
+
+    <!-- 获取揽储人账户信息总数 -->
+    <select id="findCount" resultType="Long" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        count(1)
+        FROM
+        (
+        SELECT
+            ec.*,
+            eco.teller_code AS old_teller_code,
+            psu.name as old_teller_name,
+            coas.status
+        FROM
+            bps_78000.t_dktj_employee_customer ec
+          LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE AND coas.org_code = ec.org_code
+          LEFT JOIN bps_78000.t_dktj_employee_customer eco on ec.parent_id = eco.id
+          LEFT JOIN public.t_sys_user psu ON eco.teller_code = psu.code
+          WHERE ec.valid_flag = TRUE
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+            suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+    </select>
+
+    <select id="findList" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        t.*,
+        su.name as teller_name,
+        uo.code as teller_org_code,
+        uo.name as teller_org_name,
+        o.id AS organization_id,
+        o.name AS organization_name
+        FROM
+        (
+        SELECT
+            ec.*,
+            ec.start_date as date,
+            1 AS account_count,
+            ec.register_type AS flag,
+            eco.teller_code AS old_teller_code,
+            psu.name as old_teller_name,
+            coas.status
+        FROM
+            bps_78000.t_dktj_employee_customer ec
+          LEFT JOIN bps_78000.t_dktj_customer_status coas ON ec.xd_customer_no = coas.xd_customer_no AND coas.valid_flag = TRUE AND coas.org_code = ec.org_code
+          LEFT JOIN bps_78000.t_dktj_employee_customer eco on ec.parent_id = eco.id
+          LEFT JOIN public.t_sys_user psu ON eco.teller_code = psu.code
+          WHERE ec.valid_flag = TRUE
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        LEFT JOIN public.t_sys_user su on t.teller_code = su.code
+        LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
+        LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
+        <where>
+            suo.del_flag = FALSE AND suo.status = 1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+            <if test="startDate != null">
+                AND <![CDATA[ t.start_date <= #{startDate} ]]>
+            </if>
+            <!-- 搜索条件 -->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND t.teller_code = #{tellerCode}
+            </if>
+            <if test="oldTellerCode != null and oldTellerCode != ''">
+                AND t.old_teller_code = #{oldTellerCode}
+            </if>
+            <if test="oldTellerName != null and oldTellerName != ''">
+                AND t.old_teller_name = #{oldTellerName}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                AND t.account_no = #{accountNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="customerType != null and customerType != ''">
+                AND t.customer_type = #{customerType}
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY t.id DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <select id="getUserCurrentOrganizationCodeByUserCode" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT o.code
+        FROM public.t_sys_user u
+        LEFT JOIN public.t_sys_user_organization uo ON u.id = uo.user_id
+        LEFT JOIN public.t_sys_organization o ON uo.organization_id = o.id
+        WHERE u.code = #{tellerCode} AND status = 1 AND uo.del_flag = false
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM bps_78000.t_dktj_employee_customer WHERE id = #{id}
+    </delete>
+
+    <insert id="insertCustomerOrgAndStatus" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        INSERT INTO bps_78000.t_dktj_customer_status
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                xd_customer_no,
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code,
+            </if>
+            <if test="status != null and status != ''">
+                status,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="parentId != null" >
+                parent_id,
+            </if>
+            <if test="validFlag != null " >
+                valid_flag,
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                check_status,
+            </if>
+            <if test="registerAccountNo != null and registerAccountNo != '' " >
+                register_account_no,
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                create_by,
+            </if>
+            <if test="createTime != null " >
+                create_time
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                #{xdCustomerNo},
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                #{orgCode},
+            </if>
+            <if test="status != null and status != ''" >
+                #{status},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="parentId != null" >
+                #{parentId},
+            </if>
+            <if test="validFlag != null ">
+                #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                #{checkStatus},
+            </if>
+            <if test="registerAccountNo != null and registerAccountNo != '' " >
+                #{registerAccountNo},
+            </if>
+            <if test="createBy != null and createBy.id != null">
+                #{createBy.id},
+            </if>
+            <if test="createTime != null">
+                #{createTime}
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateValidCustomerOrgAndStatusById" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        UPDATE bps_78000.t_dktj_customer_status
+        <set>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                xd_customer_no = #{xdCustomerNo},
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code = #{orgCode},
+            </if>
+            <if test="status != null and status != ''">
+                status = #{status},
+            </if>
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="parentId != null" >
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                check_status = #{checkStatus}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCustomerOrgAndStatusByXdCustomerNoWithNull" parameterType="org.nmgns.bps.dktj.dto.CustomerOrgAndStatus">
+        UPDATE bps_78000.t_dktj_customer_org_and_status
+        <set>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''" >
+                xd_customer_no = #{xdCustomerNo},
+            </if>
+                org_code = #{orgCode},
+                status = #{status},
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="parentId != null" >
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag}
+            </if>
+        </set>
+        WHERE xd_customer_no = #{xdCustomerNo} AND valid_flag = TRUE
+    </update>
+
+    <select id="getValidCustomerStatusByXdCustomerNoAndOrg" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus" resultType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        SELECT *
+        FROM bps_78000.t_dktj_customer_status
+        WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode} AND valid_flag = TRUE AND check_status = #{CHECK_STATUS_CHECKED}
+    </select>
+
+    <select id="findOrgEmployeeCustomerCount" resultType="java.lang.Long" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        SELECT count(*)
+        FROM
+        (
+            select
+                   a.id,
+                   a.org_code,
+                   a.xd_customer_no,
+                   a.status,
+                   a.start_date,
+                   a.end_date,
+                   a.parent_id,
+                   a.valid_flag,
+                   a.create_time,
+                   case when p.c_name is not null then '1' else '2' end customer_type,
+                   coalesce(p.c_name,c.c_name) customer_name,
+                   coalesce(p.card_num,c.licence_code) identity_no
+            from
+                 bps_78000.t_dktj_customer_status a
+                 left join t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
+                 left join t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        <where>
+            1=1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+        </where>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+    </select>
+
+    <!-- 分页获取客户的固定流动状态 -->
+    <select id="findOrgEmployeeCustomer" resultType="org.nmgns.bps.dktj.dto.CustomerStatus" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        SELECT
+        t.*,
+        o.id AS organization_id,
+        o.name AS organization_name
+        FROM
+        (
+            select
+                a.id,
+                a.org_code,
+                a.xd_customer_no,
+                a.status,
+                a.start_date,
+                a.end_date,
+                a.parent_id,
+                a.valid_flag,
+                a.create_time,
+                case when p.c_name is not null then '1' else '2' end customer_type,
+                coalesce(p.c_name,c.c_name) customer_name,
+                coalesce(p.card_num,c.licence_code) identity_no
+            from
+                bps_78000.t_dktj_customer_status a
+            left join t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
+            left join t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
+        ) t
+        LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
+        <where>
+            1=1
+            <if test="organizationId != null" >
+                AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND t.customer_name LIKE '%'||#{customerName}||'%'
+            </if>
+            <if test="xdCustomerNo != null and xdCustomerNo != ''">
+                AND t.xd_customer_no = #{xdCustomerNo}
+            </if>
+            <if test="identityNo != null and identityNo != ''">
+                AND t.identity_no = #{identityNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="orgCode != null and orgCode != ''">
+                AND t.org_code = #{orgCode}
+            </if>
+        </where>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY t.id DESC
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
+    <select id="findUserList" parameterType="java.lang.String" resultType="org.nmgns.bps.dktj.dto.UserInfoForBind">
+        SELECT
+          a.code AS userCode,
+          a.name AS userName,
+          o.code AS organizationCode,
+          o.name AS organizationName,
+          uo.start_date,
+          uo.status
+        FROM public.t_sys_user a
+        LEFT JOIN public.t_sys_user_organization uo ON a.id = uo.user_id
+        LEFT JOIN public.t_sys_organization o ON uo.organization_id = o.id
+        <where>
+            uo.status IN (1) AND uo.del_flag = false AND a.del_flag = false AND o.del_flag = false AND a.code NOT LIKE 'user_%' AND a.code NOT LIKE 'admin%'
+            <if test="userCodeOrName != null and userCodeOrName != ''">
+                AND (a.code like '%'||#{userCodeOrName}||'%' OR a.name like '%'||#{userCodeOrName}||'%')
+            </if>
+        </where>
+        ORDER BY a.code ASC LIMIT 10
+    </select>
+
+<!--    <select id="getUncheckedCustomerAccountByXdCustomerNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT *-->
+<!--        FROM bps_78000.t_dktj_employee_customer-->
+<!--        WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode} AND (register_check_status = '0' or alter_check_status = '0')-->
+<!--    </select>-->
+
+<!--    <select id="getCustomerAccountByXdCustomerNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">-->
+<!--        SELECT-->
+<!--               a.*,-->
+<!--               get_org_code_by_teller_code(a.teller_code,#{date}) teller_org_code-->
+<!--        FROM bps_78000.t_dktj_employee_customer a-->
+<!--        WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode} AND valid_flag = true AND org_code != get_org_code_by_teller_code(a.teller_code,#{date})-->
+<!--    </select>-->
+
+    <select id="changeStatusToFix" statementType="CALLABLE" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.Boolean">
+        {CALL dktj_release_customer_after_change_status_to_fix(#{orgCode,mode=IN,jdbcType=VARCHAR},#{xdCustomerNo,mode=IN,jdbcType=VARCHAR},#{tellerId,mode=IN,jdbcType=BIGINT}) }
+    </select>
+
+    <select id="getUncheckedCustomerStatusByXdCustomerNoAndOrg" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus" resultType="org.nmgns.bps.dktj.dto.CustomerStatus">
+        SELECT *
+        FROM bps_78000.t_dktj_customer_status
+        WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode} AND check_status = #{CHECK_STATUS_UNCHECKED} and valid_flag = false
+    </select>
+
+    <select id="getUncheckedAccountTemplateByAccountNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate" resultType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        SELECT *
+        FROM bps_78000.t_dktj_account_template
+        WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND check_status = #{CHECK_STATUS_UNCHECKED} and valid_flag = false
+    </select>
+
+    <update id="updateAccountTemplateById" parameterType="org.nmgns.bps.dktj.entity.AccountTemplate">
+        UPDATE bps_78000.t_dktj_account_template
+        <set>
+            <if test="templateId != null " >
+                template_id = #{templateId},
+            </if>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code = #{orgCode},
+            </if>
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="parentId != null" >
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                check_status = #{checkStatus},
+            </if>
+            <if test="updateTime != null " >
+                update_time = #{updateTime},
+            </if>
+            <if test="updateBy != null and updateBy.id != null" >
+                update_by = #{updateBy.id}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="getUncheckedAccountShareInfoByAccountNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo" resultType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        SELECT s.*,
+               p.type AS position_type
+        from
+             bps_78000.t_dktj_account_share_info s
+                 left join bps_78000.t_dktj_account_template at on s.account_template_id = at.id
+                 left join bps_78000.t_dktj_template_detail td on s.template_detail_id = td.id
+                 left join bps_78000.t_dktj_position p on td.position_id = p.id
+        where
+              at.account_no = #{accountNo}
+              and at.org_code = #{orgCode}
+              and at.valid_flag = true
+              and s.valid_flag = false
+              and s.check_status = #{CHECK_STATUS_UNCHECKED};
+    </select>
+
+    <update id="updateAccountShareInfoById" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        UPDATE bps_78000.t_dktj_account_share_info
+        <set>
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+<!--            <if test="endDate != null"> -->
+                end_date = #{endDate},
+<!--             </if> -->
+            <if test="parentId != null" >
+                parent_id = #{parentId},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != ''" >
+                check_status = #{checkStatus},
+            </if>
+            <if test="remarks != null">
+                remarks = #{remarks},
+            </if>
+            <if test="updateTime != null " >
+                update_time = #{updateTime},
+            </if>
+            <if test="updateBy != null and updateBy.id != null" >
+                update_by = #{updateBy.id}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteAccountShareInfoById" parameterType="org.nmgns.bps.dktj.entity.AccountShareInfo">
+        DELETE FROM bps_78000.t_dktj_account_share_info WHERE id = #{id}
+    </delete>
+
+    <select id="getLoanHandleCurrentDate" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT
+        MIN(a.ln_curr_date) AS current_date
+        FROM bps_78000.t_dktj_loan_handle_config a
+        LEFT JOIN public.t_sys_organization o ON o.code = a.org_code
+        WHERE a.type = '1' AND a.org_code != '78041'
+        <if test='organizationId != null and organizationId != ""' >
+            AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+        </if>
+        <!-- 数据范围过滤 -->
+        ${sqlMap.dsf}
+    </select>
+    
+    <select id="getValidAccountTemplateByAccountNoAndOrgCode" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.Integer">
+        SELECT count(*) FROM bps_78000.t_dktj_account_template WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND valid_flag = TRUE
+    </select>
+
+    <select id="getSpecialAccountTypeList" resultType="org.nmgns.bps.dktj.entity.SpecialAccountType">
+        SELECT * FROM bps_78000.t_dktj_special_account_type WHERE valid_flag = true ORDER BY sort;
+    </select>
+
+    <insert id="insertSpecialAccountType" parameterType="org.nmgns.bps.dktj.entity.SpecialAccountType">
+        INSERT INTO bps_78000.t_dktj_special_account
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orgCode != null and orgCode != ''" >
+                org_code,
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                account_no,
+            </if>
+            <if test="typeId != null" >
+                type_id,
+            </if>
+            <if test="startDate != null" >
+                start_date,
+            </if>
+            <if test="validFlag != null " >
+                valid_flag,
+            </if>
+            <if test="checkStatus != null and checkStatus != '' " >
+                check_status,
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                create_by,
+            </if>
+            <if test="createTime != null " >
+                create_time
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="orgCode != null and orgCode != ''" >
+                #{orgCode},
+            </if>
+            <if test="accountNo != null and accountNo != ''" >
+                #{accountNo},
+            </if>
+            <if test="typeId != null" >
+                #{typeId},
+            </if>
+            <if test="startDate != null" >
+                #{startDate},
+            </if>
+            <if test="validFlag != null ">
+                #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != '' " >
+                #{checkStatus},
+            </if>
+            <if test="createBy != null and createBy.id != null">
+                #{createBy.id},
+            </if>
+            <if test="createTime != null">
+                #{createTime}
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteSpecialAccountTypeById" parameterType="java.lang.Long">
+        DELETE FROM bps_78000.t_dktj_special_account WHERE id = #{id}
+    </delete>
+
+    <select id="getRegisterUncheckSpecialAccountType" resultType="org.nmgns.bps.dktj.entity.SpecialAccountType" parameterType="org.nmgns.bps.dktj.entity.SpecialAccountType">
+        SELECT * FROM bps_78000.t_dktj_special_account WHERE valid_flag = FALSE AND account_no = #{accountNo} AND org_code = #{orgCode} AND check_status = #{CHECK_STATUS_UNCHECKED};
+    </select>
+
+    <update id="updateSpecialAccountType" parameterType="org.nmgns.bps.dktj.entity.SpecialAccountType">
+        UPDATE bps_78000.t_dktj_special_account
+        <set>
+            <if test="orgCode != null and orgCode != ''" >
+                org_code = #{orgCode},
+            </if>
+            <if test="accountNo != null and accountNo != ''">
+                account_no = #{accountNo},
+            </if>
+            <if test="typeId != null" >
+                type_id = #{typeId},
+            </if>
+            <if test="startDate != null" >
+                start_date = #{startDate},
+            </if>
+            <if test="validFlag != null " >
+                valid_flag = #{validFlag},
+            </if>
+            <if test="checkStatus != null and checkStatus != '' " >
+                check_status = #{checkStatus},
+            </if>
+            <if test="createBy != null and createBy.id != null" >
+                create_by = #{createBy.id},
+            </if>
+            <if test="createTime != null " >
+                create_time = #{create_time}
+            </if>
+        </set>
+        Where id = #{id}
+    </update>
+
+    <select id="getValidEmployeeCustomerByAccountNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
+        SELECT * FROM bps_78000.t_dktj_employee_customer WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND valid_flag = TRUE
+    </select>
+
+
+</mapper>

@@ -20,6 +20,6 @@ public class UserOrganization extends BaseEntity {
 
     private String organizationName;
     private String organizationCode;
-
+    private String userCodeOrName;
 
 }
