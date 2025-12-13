@@ -48,7 +48,7 @@
 
     <sql id="employeeJoins">
         LEFT JOIN public.t_sys_user su ON su.code = ec.teller_code
-        LEFT JOIN public.t_sys_user_organization suo ON suo.user_id = su.id AND suo.status = 1
+        LEFT JOIN public.t_sys_user_organization suo ON suo.user_id = su.id AND suo.valid_flag = true
         LEFT JOIN public.t_sys_organization so ON so.id = suo.organization_id
     </sql>
 
@@ -414,7 +414,7 @@
         LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
-            suo.del_flag = FALSE AND suo.status = 1
+            suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -485,7 +485,7 @@
         LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
-             suo.del_flag = FALSE AND suo.status = 1
+            suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -810,7 +810,7 @@
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
             t.alter_check_status = #{CHECKED_STATUS_UNCHECKED} AND t.register_type IN (#{REGISTER_TYPE_CHANGED_CUSTOMER})
-            AND suo.del_flag = FALSE AND suo.status = 1
+            AND suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -880,7 +880,7 @@
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
             t.alter_check_status = #{CHECKED_STATUS_UNCHECKED} AND t.register_type IN (#{REGISTER_TYPE_CHANGED_CUSTOMER})
-            AND suo.del_flag = FALSE AND suo.status = 1
+            AND suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -975,7 +975,7 @@
         LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
-            suo.del_flag = FALSE AND suo.status = 1
+            suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -1039,7 +1039,7 @@
         LEFT JOIN public.t_sys_user_organization suo on su.id = suo.user_id
         LEFT JOIN public.t_sys_organization uo on suo.organization_id = uo.id
         <where>
-            suo.del_flag = FALSE AND suo.status = 1
+            suo.valid_flag = true
             <if test="organizationId != null" >
                 AND (o.id = #{organizationId} OR o.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
             </if>
@@ -1349,12 +1349,13 @@
           o.code AS organizationCode,
           o.name AS organizationName,
           uo.start_date,
-          uo.status
+          us.status
         FROM public.t_sys_user a
         LEFT JOIN public.t_sys_user_organization uo ON a.id = uo.user_id
         LEFT JOIN public.t_sys_organization o ON uo.organization_id = o.id
+        LEFT JOIN public.t_sys_user_status us on uo.user_id = us.user_id
         <where>
-            uo.status IN (1) AND uo.del_flag = false AND a.del_flag = false AND o.del_flag = false AND a.code NOT LIKE 'user_%' AND a.code NOT LIKE 'admin%'
+            us.status = 'USER_STATUS_NORMAL' AND uo.valid_flag = true AND a.del_flag = false AND o.del_flag = false AND a.code NOT LIKE 'user_%' AND a.code NOT LIKE 'admin%'
             <if test="userCodeOrName != null and userCodeOrName != ''">
                 AND (a.code like '%'||#{userCodeOrName}||'%' OR a.name like '%'||#{userCodeOrName}||'%')
             </if>

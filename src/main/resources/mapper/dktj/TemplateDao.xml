@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ynsh.ims.modules.dktj.dao.TemplateDao">
+<mapper namespace="org.nmgns.bps.dktj.dao.TemplateDao">
 
     <!-- 获取当前可用的模板列表-->
     <select id="findAvailableTemplateList" resultType="org.nmgns.bps.dktj.entity.Template">
@@ -11,10 +11,15 @@
     <select id="findTemplateDetailListByTemplateId" resultType="org.nmgns.bps.dktj.entity.TemplateDetail">
         SELECT
             a.*,
-            fun_dktj_get_most_possible_position_teller_code(#{accountNo},#{templateId},a.position_id) AS teller_code,
+            bps_78000.fun_dktj_get_most_possible_position_teller_code(#{accountNo},#{templateId},a.position_id) AS teller_code,
             p.name AS "position.name",
             p.type AS "position.type"
-        FROM bps_78000.t_dktj_template_detail a LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id WHERE a.template_id = #{templateId};
+        FROM
+            bps_78000.t_dktj_template_detail a
+            LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        WHERE
+            a.template_id = #{templateId}
+        ORDER BY p.id
     </select>
 
     <!-- 获取指定模板岗位对照的详细信息 -->

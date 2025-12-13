@@ -11,4 +11,6 @@ public class Template extends BaseEntity {
     private Integer sort;
     private Boolean validFlag;
     private Date invalidDate;
+    private String name;
+
 }

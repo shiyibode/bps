@@ -376,9 +376,9 @@
         SELECT
             count(*)
         FROM
-        t_dktj_unbound_employee_interest a
-        LEFT JOIN t_dktj_employee_customer ec ON a.account_no = ec.account_no AND a.org_code = ec.org_code AND ec.valid_flag = TRUE
-        LEFT JOIN t_sys_organization o ON a.org_code = o.code
+        bps_78000.t_dktj_unbound_employee_interest a
+        LEFT JOIN bps_78000.t_dktj_employee_customer ec ON a.account_no = ec.account_no AND a.org_code = ec.org_code AND ec.valid_flag = TRUE
+        LEFT JOIN public.t_sys_organization o ON a.org_code = o.code
         <where>
             a.del_flag = FALSE
             <if test="organizationId != null" >
@@ -411,9 +411,9 @@
             ec.teller_code AS teller_code,
             o.name AS org_name
         FROM
-            t_dktj_unbound_employee_interest a
-            LEFT JOIN t_dktj_employee_customer ec ON a.account_no = ec.account_no AND a.org_code = ec.org_code AND ec.valid_flag = TRUE
-            LEFT JOIN t_sys_organization o ON a.org_code = o.code
+            bps_78000.t_dktj_unbound_employee_interest a
+            LEFT JOIN bps_78000.t_dktj_employee_customer ec ON a.account_no = ec.account_no AND a.org_code = ec.org_code AND ec.valid_flag = TRUE
+            LEFT JOIN public.t_sys_organization o ON a.org_code = o.code
         <where>
             a.del_flag = FALSE
             <if test="organizationId != null" >
@@ -438,11 +438,8 @@
             ${sqlMap.dsf}
         </where>
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY a.org_code ASC, a.account_open_date DESC
@@ -457,25 +454,25 @@
         SELECT
             a.*
         FROM
-            t_dktj_unbound_employee_interest a
+            bps_78000.t_dktj_unbound_employee_interest a
         WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND del_flag = FALSE
     </select>
 
     <!-- 补录后删除待补录的信息 -->
     <update id="deleteReaddAccountById" parameterType="java.lang.Long">
-        UPDATE t_dktj_unbound_employee_interest SET del_flag = TRUE WHERE id = #{id}
+        UPDATE bps_78000.t_dktj_unbound_employee_interest SET del_flag = TRUE WHERE id = #{id}
     </update>
 
     <select id="getValidEmployeeAccountCount" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.Integer">
-        SELECT count(*) FROM t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo} AND valid_flag = TRUE
+        SELECT count(*) FROM bps_78000.t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo} AND valid_flag = TRUE
     </select>
 
     <select id="getEmployeeAccountCount" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.Integer">
-        SELECT count(*) FROM t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo}
+        SELECT count(*) FROM bps_78000.t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo}
     </select>
 
     <select id="getCurrentValidEmployeeCustomerTellerCode" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.String">
-        SELECT teller_code FROM t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo} AND valid_flag = TRUE
+        SELECT teller_code FROM bps_78000.t_dktj_employee_customer WHERE org_code = #{orgCode} AND account_no = #{accountNo} AND valid_flag = TRUE
     </select>
 
     <!-- 获取岗位责任的账户信息（含岗位、模板） -->
@@ -492,13 +489,13 @@
             p.changeable AS position_changeable,
             p.type AS position_type
         FROM
-            t_dktj_account_share_info s
-            LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id
-            LEFT JOIN t_dktj_template t ON dat.template_id = t.id
-            LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
-            LEFT JOIN t_dktj_position p ON td.position_id = p.id
-            LEFT JOIN t_sys_user u ON s.teller_code = u.code
-            LEFT JOIN t_sys_organization lno ON dat.org_code = lno.code
+            bps_78000.t_dktj_account_share_info s
+            LEFT JOIN bps_78000.t_dktj_account_template dat ON s.account_template_id = dat.id
+            LEFT JOIN bps_78000.t_dktj_template t ON dat.template_id = t.id
+            LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+            LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+            LEFT JOIN public.t_sys_user u ON s.teller_code = u.code
+            LEFT JOIN public.t_sys_organization lno ON dat.org_code = lno.code
             LEFT JOIN (SELECT loan_account,cust_id,c_name FROM t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
         <where>
             s.valid_flag = TRUE AND dat.valid_flag = TRUE
@@ -527,11 +524,8 @@
             ${sqlMap.dsf}
         </where>
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY dat.org_code ASC, dat.account_no DESC,p.id ASC
