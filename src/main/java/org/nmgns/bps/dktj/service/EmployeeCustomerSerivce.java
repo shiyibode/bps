@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -90,12 +91,26 @@ public class EmployeeCustomerSerivce {
         String currentOrganizationCode = employeeCustomerDao.getUserCurrentOrganizationCodeByUserCode(euc.getTellerCode());
         if (!currentOrganizationCode.equals(eucInfo.getOrgCode()) && euc.getStatus().equals(EmployeeCustomer.STATUS_FIXED_CUSTOMER)) throw new Exception("登记维护人出错，固定客户无法绑定到非本机构的员工");
 
+        // 有任务分成时，校验
+        if (euc.getTaskAllBelongMainTellerFlag() == Boolean.FALSE){
+            if (euc.getTellerTaskPercentageList().isEmpty()) throw new RuntimeException("缺少任务分成比例");
+
+            double percentage = 0;
+            for (TellerPercentage tp:euc.getTellerTaskPercentageList()){
+                User tmpUser = userService.getUserByCode(tp.getTellerCode());
+                if (null == tmpUser) throw new RuntimeException("员工不存在: "+tp.getTellerCode());
+
+                percentage = percentage + tp.getPercentage();
+            }
+            if (percentage != 1) throw new RuntimeException("比例总和不为1，请重新分配比例");
+        }
+
         User currentUser = userUtils.getCurrentLoginedUser();
 
         //7-对于新客户的账号
         if (eucInfo.getFlag().equals(EmployeeCustomer.FLAG_NEW_CUSTOMER) ){
             // 8.1-判断所有岗位是否都已填写了行内员工
-            if (euc.getAccountShareInfoList() == null || euc.getAccountShareInfoList().size() == 0) throw new Exception("新账户登记时未填写相关责任人");
+            if (euc.getAccountShareInfoList() == null || euc.getAccountShareInfoList().isEmpty()) throw new Exception("新账户登记时未填写相关责任人");
             for (AccountShareInfo asi:euc.getAccountShareInfoList()){
                 TemplateDetail td = templateDao.findTemplateDetailInfoById(asi.getTemplateDetailId());
                 String positionName = td.getPositionName();
@@ -113,7 +128,7 @@ public class EmployeeCustomerSerivce {
 
             // 9-绑定新客户：更新t_dktj_customer_status中客户的status，即固定/流动状态; 柜员调动后释放的客户不应该修改其status(固定/流动状态)，而且释放的客户只可能是固定状态
                            //已登记了状态的客户（无论是否已经复核）都不再登记状态
-            if (csList == null || csList.size() == 0){
+            if (csList == null || csList.isEmpty()){
                 CustomerStatus cs = new CustomerStatus();
                 cs.setStartDate(eucInfo.getDate());
                 cs.setStatus(euc.getStatus());
@@ -249,6 +264,29 @@ public class EmployeeCustomerSerivce {
         employeeCustomerDao.insertEmployeeCustomer(ec);
         // 6.4-删除t_dktj_unbound_customer表中相应的记录
         employeeCustomerDao.deleteUnboundCustomerInfoByXdCustomerNo(ec.getOrgCode(),eucInfo.getXdCustomerNo(),eucInfo.getAccountNo());
+
+
+        if (ec.getId() == null) throw new RuntimeException("未获取到t_dktj_employee_customer表返回的id");
+        // 11-2 写入任务数分成比例信息
+        if (euc.getTaskAllBelongMainTellerFlag() == Boolean.FALSE){
+            // 任务分成有多个人
+            List<TellerPercentage> tellerPercentageList = euc.getTellerTaskPercentageList();
+            for (TellerPercentage tp:tellerPercentageList){
+                tp.setEmpCstId(ec.getId());
+                tp.setCreateTime(new Date());
+                tp.setCreateBy(currentUser.getId());
+                employeeCustomerDao.insertLoanTaskDetail(tp);
+            }
+        } else {
+            // 任务分成100%归属于主营销人员
+            TellerPercentage tp = new TellerPercentage();
+            tp.setEmpCstId(ec.getId());
+            tp.setTellerCode(euc.getTellerCode());
+            tp.setPercentage(1d);
+            tp.setCreateTime(new Date());
+            tp.setCreateBy(currentUser.getId());
+            employeeCustomerDao.insertLoanTaskDetail(tp);
+        }
         
     }
 
@@ -266,6 +304,11 @@ public class EmployeeCustomerSerivce {
         PageData<EmployeeCustomer> employeeCustomerPageData = new PageData<>();
         Long count = employeeCustomerDao.findRegisterUncheckedCustomerCount(ec);
         List<EmployeeCustomer> employeeCustomerList = employeeCustomerDao.findRegisterUncheckedCustomer(ec);
+
+        for (EmployeeCustomer ecTmp:employeeCustomerList){
+            List<TellerPercentage> tellerPercentageList = employeeCustomerDao.getLoanTaskDetailByEmpCstId(ecTmp.getId());
+            ecTmp.setTellerTaskPercentageList(tellerPercentageList);
+        }
 
 
         employeeCustomerPageData.setTotal(count);
@@ -396,6 +439,9 @@ public class EmployeeCustomerSerivce {
             employeeCustomerDao.deleteRegisterEmployee(ecInfo);
             employeeCustomerDao.insertUnboundCustomer(euc);
 
+            // 删除任务分成表中的记录
+            employeeCustomerDao.deleteLoanTaskDetailByEmpCstId(ecInfo.getId());
+
             if (ecInfo.getRegisterType().equals(EmployeeCustomer.REGISTER_TYPE_NEW_CUSTOMER)){
                 //获取t_dktj_employee_account表中，该信贷客户在该机构还有几条记录
                 int accountCnt = employeeCustomerDao.getAccountCount(ecInfo.getXdCustomerNo(),ecInfo.getOrgCode());
@@ -425,6 +471,7 @@ public class EmployeeCustomerSerivce {
 
                 //3-删除分成比例信息表中信息
                 templateDao.deleteAccountShareInfoByAccountTemplateId(at.getId());
+
             }
 
             //4-对于释放的客户,删除分成规则中新增的维护人记录
@@ -471,6 +518,11 @@ public class EmployeeCustomerSerivce {
         PageData<EmployeeCustomer> employeeCustomerPageData = new PageData<>();
         Long count = employeeCustomerDao.findModifiableCustomerCount(ec);
         List<EmployeeCustomer> employeeCustomerList = employeeCustomerDao.findModifiableCustomer(ec);
+
+        for (EmployeeCustomer ecTmp:employeeCustomerList){
+            List<TellerPercentage> tellerPercentageList = employeeCustomerDao.getLoanTaskDetailByEmpCstId(ecTmp.getId());
+            ecTmp.setTellerTaskPercentageList(tellerPercentageList);
+        }
 
 
         employeeCustomerPageData.setTotal(count);
@@ -575,6 +627,31 @@ public class EmployeeCustomerSerivce {
             templateDao.insertAccountShareInfo(temp4);
         }
 
+        // 更改任务分成比例
+        if (temp2.getId() == null) throw new RuntimeException("写入新纪录到t_dktj_employee_customer表后未返回id");
+        if (ec.getTaskAllBelongMainTellerFlag() == null) throw new RuntimeException("未提供任务分成比例");
+        if (ec.getTaskAllBelongMainTellerFlag() ){
+            TellerPercentage tp = new TellerPercentage();
+            tp.setEmpCstId(temp2.getId());
+            tp.setTellerCode(ec.getTellerCode());
+            tp.setPercentage(1d);
+            tp.setCreateTime(new Date());
+            tp.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+            employeeCustomerDao.insertLoanTaskDetail(tp);
+        } else {
+            List<TellerPercentage> tpList = ec.getTellerTaskPercentageList();
+            if (tpList.isEmpty()) throw new RuntimeException("未提供任务分成比例");
+            double cnt = 0;
+            for (TellerPercentage tp:tpList){
+                cnt += tp.getPercentage();
+                tp.setEmpCstId(temp2.getId());
+                tp.setCreateTime(new Date());
+                tp.setCreateBy(userUtils.getCurrentLoginedUser().getId());
+                employeeCustomerDao.insertLoanTaskDetail(tp);
+            }
+            if(cnt != 1) throw new RuntimeException("任务分成比例总和不为1");
+        }
+
     }
 
     /**
@@ -603,6 +680,10 @@ public class EmployeeCustomerSerivce {
         Long count = employeeCustomerDao.findModifiedUncheckedCustomerCount(ec);
         List<EmployeeCustomer> employeeCustomerList = employeeCustomerDao.findModifiedUncheckedCustomer(ec);
 
+        for (EmployeeCustomer ecTmp:employeeCustomerList){
+            List<TellerPercentage> tellerPercentageList = employeeCustomerDao.getLoanTaskDetailByEmpCstId(ecTmp.getId());
+            ecTmp.setTellerTaskPercentageList(tellerPercentageList);
+        }
 
         employeeCustomerPageData.setTotal(count);
         employeeCustomerPageData.setList(employeeCustomerList);
@@ -700,6 +781,8 @@ public class EmployeeCustomerSerivce {
         //4-删除新增的分成规则记录
         templateDao.deleteAccountShareInfoById(asi.getId());
 
+        //5-删除任务分成比例
+        employeeCustomerDao.deleteLoanTaskDetailByEmpCstId(dbEc.getId());
     }
 
     /**
@@ -799,6 +882,10 @@ public class EmployeeCustomerSerivce {
         Long count = employeeCustomerDao.findCount(ec);
         List<EmployeeCustomer> employeeCustomerList = employeeCustomerDao.findList(ec);
 
+        for (EmployeeCustomer ecTmp:employeeCustomerList){
+            List<TellerPercentage> tellerPercentageList = employeeCustomerDao.getLoanTaskDetailByEmpCstId(ecTmp.getId());
+            ecTmp.setTellerTaskPercentageList(tellerPercentageList);
+        }
 
         employeeCustomerPageData.setTotal(count);
         employeeCustomerPageData.setList(employeeCustomerList);

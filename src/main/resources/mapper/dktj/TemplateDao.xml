@@ -65,7 +65,7 @@
             <if test="createTime != null" >
                 create_time,
             </if>
-            <if test="createBy != null and createBy.id != null" >
+            <if test="createBy != null " >
                 create_by
             </if>
         </trim>
@@ -100,8 +100,8 @@
             <if test="createTime != null" >
                 #{createTime},
             </if>
-            <if test="createBy != null and createBy.id != null" >
-                #{createBy.id}
+            <if test="createBy != null " >
+                #{createBy}
             </if>
         </trim>
     </insert>
@@ -146,7 +146,7 @@
             <if test="createTime != null" >
                 create_time,
             </if>
-            <if test="createBy != null and createBy.id != null" >
+            <if test="createBy != null " >
                 create_by
             </if>
         </trim>
@@ -187,8 +187,8 @@
             <if test="createTime != null" >
                 #{createTime},
             </if>
-            <if test="createBy != null and createBy.id != null" >
-                #{createBy.id}
+            <if test="createBy != null " >
+                #{createBy}
             </if>
         </trim>
     </insert>
@@ -260,8 +260,8 @@
             <if test="updateTime != null">
                 update_time = #{updateTime},
             </if>
-            <if test="updateBy != null and updateBy.id != null">
-                update_by = #{updateBy.id},
+            <if test="updateBy != null ">
+                update_by = #{updateBy},
             </if>
             <if test="alterCheckStatus != null">
                 alter_check_status = #{alterCheckStatus},
@@ -404,8 +404,8 @@
             <if test="updateTime != null " >
                 update_time = #{updateTime},
             </if>
-            <if test="updateBy != null and updateBy.id != null" >
-                update_by = #{updateBy.id}
+            <if test="updateBy != null " >
+                update_by = #{updateBy}
             </if>
         </set>
         WHERE id = #{id}

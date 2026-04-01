@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.nmgns.bps.dktj.dao.LoanDao">
+    <sql id="empColumns">
+        a.teller_code,
+        a.teller_org_code,
+        u.name AS teller_name,
+        uo.name AS teller_org_name,
+    </sql>
+
+    <sql id="orgExportLoanColumns">
+        a.date,
+        a.dp_org_code,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        SUM (a.balance) AS balance
+    </sql>
+
+    <sql id="orgLoanColumns">
+        a.id,
+        a.date,
+        a.ln_org_code,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        a.four_class_flag,
+        a.five_class_flag,
+        a.balance,
+        a.ttl_received_int,
+        a.day_received_int
+    </sql>
+
+
+    <sql id="avgOrgLoanColumns">
+        a.ln_org_code,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        a.four_class_flag,
+        a.five_class_flag,
+        round(sum(a.balance)/${avgDays},2) AS balance,
+        round(sum(a.ttl_received_int)/${avgDays},2) AS ttl_received_int,
+        round(sum(a.day_received_int)/${avgDays},2) AS day_received_int,
+        #{startDate} AS start_date,
+        #{endDate} AS end_date,
+        ${avgDays} AS avg_days
+    </sql>
+
+    <!-- 机构时点 -->
+    <select id="findOrganizationLoanList" parameterType="org.nmgns.bps.dktj.entity.Loan" resultType="org.nmgns.bps.dktj.entity.Loan" >
+        SELECT
+        <include refid="orgLoanColumns"/>
+        ,#{loanType} AS loanType
+        FROM
+        bps_78000.t_dktj_organization_loan_detail a
+        LEFT JOIN public.t_sys_organization lno on lno.code = a.ln_org_code
+        LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统贷款 -->
+                    <when test="loanType != null and loanType == 0">
+                        ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 汇总贷款: 核心贷款 + 调入贷款 - 调离贷款 -->
+                    <when test="loanType != null and loanType == 1">
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 调入贷款 -->
+                    <when test="loanType != null and loanType == 2">
+                        ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                    <!-- 调离贷款 -->
+                    <when test="loanType != null and loanType == 3">
+                        ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                </choose>
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        ORDER BY a.date DESC, a.five_class_flag ASC
+    </select>
+
+    <!-- 机构日均 -->
+    <select id="findOrganizationAvgLoanList" parameterType="org.nmgns.bps.dktj.entity.Loan" resultType="org.nmgns.bps.dktj.entity.Loan" >
+        SELECT
+        <include refid="avgOrgLoanColumns"/>
+        FROM
+        bps_78000.t_dktj_organization_loan_detail a
+        LEFT JOIN public.t_sys_organization lno on lno.code = a.ln_org_code
+        LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统贷款 -->
+                    <when test="loanType != null and loanType == 0">
+                        ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 汇总贷款 -->
+                    <when test="loanType != null and loanType == 1">
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 调入贷款 -->
+                    <when test="loanType != null and loanType == 2">
+                        ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                    <!-- 调离贷款 -->
+                    <when test="loanType != null and loanType == 3">
+                        ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                </choose>
+            </if>
+            <!--<if test="dpOrgCode != null and dpOrgCode != ''">-->
+                <!--AND a.dp_org_code = #{dpOrgCode}-->
+            <!--</if>-->
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY a.ln_org_code, ln_org_name, a.belong_org_code, belong_org_name, a.four_class_flag, a.five_class_flag
+        ORDER BY a.five_class_flag
+    </select>
+
+    <!-- 员工时点 -->
+    <select id="findEmployeeLoanList" parameterType="org.nmgns.bps.dktj.entity.Loan" resultType="org.nmgns.bps.dktj.entity.Loan" >
+        SELECT
+        <include refid="empColumns" />
+        <include refid="orgLoanColumns"/>
+        ,#{loanType} AS loanType
+        FROM
+        bps_78000.t_dktj_employee_loan_detail a
+        LEFT JOIN public.t_sys_organization lno on lno.code = a.ln_org_code
+        LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN public.t_sys_organization uo ON uo.code = a.teller_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统贷款: 本机构员工在本机构贷款 + 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 0">
+                        ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 员工实际贷款: 本机构员工在本机构贷款 + 本机构员工从其他机构调入贷款 -->
+                    <when test="loanType != null and loanType == 1">
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 员工在本机构贷款: 核心系统贷款 - 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 2">
+                        ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                    <!-- 调入贷款: 员工从其他机构调入贷款 -->
+                    <when test="loanType != null and loanType == 3">
+                        (
+                        (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                        )
+                    </when>
+                    <!-- 调离贷款: 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 4">
+                        (
+                        (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                        )
+                    </when>
+                </choose>
+            </if>
+            <!--<if test="dpOrgCode != null and dpOrgCode != ''">-->
+                <!--AND a.dp_org_code = #{dpOrgCode}-->
+            <!--</if>-->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        ORDER BY a.date DESC, a.teller_code, a.five_class_flag
+    </select>
+
+    <select id="findEmployeeAvgLoanList" parameterType="org.nmgns.bps.dktj.entity.Loan" resultType="org.nmgns.bps.dktj.entity.Loan" >
+        SELECT
+        <include refid="empColumns" />
+        <include refid="avgOrgLoanColumns"/>
+        FROM
+        bps_78000.bps_78000.t_dktj_employee_loan_detail a
+        LEFT JOIN public.t_sys_organization lno on lno.code = a.ln_org_code
+        LEFT JOIN public.t_sys_organization blo on blo.code = a.belong_org_code
+        LEFT JOIN public.public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN public.t_sys_organization uo ON uo.code = a.teller_org_code
+        <where>
+            <if test="organizationId != null" >
+                <choose>
+                    <!-- 核心系统贷款: 本机构员工在本机构贷款 + 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 0">
+                        ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]) )
+                    </when>
+                    <!-- 员工实际贷款: 本机构员工在本机构贷款 + 本机构员工从其他机构调入贷款 -->
+                    <when test="loanType != null and loanType == 1">
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    </when>
+                    <!-- 员工在本机构贷款: 核心系统贷款 - 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 2">
+                        ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                    </when>
+                    <!-- 调入贷款: 员工从其他机构调入贷款 -->
+                    <when test="loanType != null and loanType == 3">
+                        (
+                        (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                        )
+                    </when>
+                    <!-- 调离贷款: 其他机构员工从本机构调离贷款 -->
+                    <when test="loanType != null and loanType == 4">
+                        (
+                        (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) AND
+                        (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                        )
+                    </when>
+                </choose>
+            </if>
+            <!--<if test="dpOrgCode != null and dpOrgCode != ''">-->
+                <!--AND a.dp_org_code = #{dpOrgCode}-->
+            <!--</if>-->
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY a.teller_code, teller_name, a.teller_org_code, teller_org_name, a.ln_org_code, ln_org_name, a.belong_org_code, belong_org_name, a.four_class_flag, a.five_class_flag
+        ORDER BY a.five_class_flag,a.four_class_flag ASC
+    </select>
+
+</mapper>

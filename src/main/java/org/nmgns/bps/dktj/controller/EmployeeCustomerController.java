@@ -91,15 +91,15 @@ public class EmployeeCustomerController {
 
     /**
      * 同意维护人绑定
-     * @param ec
+     * @param ecList
      */
     @RequestMapping("/checkRegisterEmployee")
     @PreAuthorize("hasAuthority('dktj:employeecustomer:checkregisteremployee')")
-    public ResponseJson checkRegisterEmployee(@RequestBody EmployeeCustomer ec){
+    public ResponseJson checkRegisterEmployee(@RequestBody List<EmployeeCustomer> ecList){
         ResponseJson responseJson = new ResponseJson();
 
-        List<EmployeeCustomer> ecList = new ArrayList<>();
-        ecList.add(ec); //留下后期扩展
+//        List<EmployeeCustomer> ecList = new ArrayList<>();
+//        ecList.add(ec); //留下后期扩展
         try {
             employeeCustomerSerivce.checkRegisterEmployee(ecList);
         }catch (Exception e){
@@ -110,7 +110,7 @@ public class EmployeeCustomerController {
         }
 
         responseJson.setSuccess(true);
-        responseJson.setMsg("复核信贷客户成功");
+        responseJson.setMsg("复核贷款账户营销人员登记成功");
         return responseJson;
     }
 
@@ -172,7 +172,7 @@ public class EmployeeCustomerController {
      */
     @RequestMapping("/modifyEmployee")
     @PreAuthorize("hasAuthority('dktj:employeecustomer:modifyemployee')")
-    public ResponseJson modifyEmployee(@RequestBody EmployeeCustomer ecList){
+    public ResponseJson modifyEmployee(@RequestBody List<EmployeeCustomer> ecList){
         ResponseJson responseJson = new ResponseJson();
 
 //        List<EmployeeCustomer> ecList = new ArrayList<>();

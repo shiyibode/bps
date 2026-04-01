@@ -12,9 +12,9 @@ INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, ur
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(511, 509, '{0,1,500,501,509}', '撤销变更', 511, 'MENU_TYPE_MENU_PERMISSION', '/dktj/employeecustomer/undoModifyEmployee','undoModifyEmployee', 'x-fa fa-comments', '1', 'dktj:employeecustomer:undomodifyemployee', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(512, 500, '{0,1,500}', '贷款客户信息', 512, 'MENU_TYPE_MENU_MENU', '/dktj/employeecustomer/get', 'dktjemployeecustomerdetail', 'x-fa fa-comments', '1', 'dktj:employeecustomer:get', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(515, 500, '{0,1,500}', '贷款余额信息', 515, 'MENU_TYPE_MENU_GROUP', '', '', 'x-fa fa-comments', '1', '', null, null, 1, now(), 1, now(), false);
-INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(516, 515, '{0,1,500,515}', '员工时点', 516, 'MENU_TYPE_MENU_MENU', '/dktj/loan/employee', 'dktjloan', 'x-fa fa-comments', '1', 'dktj:loan:employee', null, null, 1, now(), 1, now(), false);
+INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(516, 515, '{0,1,500,515}', '员工时点', 516, 'MENU_TYPE_MENU_MENU', '/dktj/loan/employee', 'dktjloanemp', 'x-fa fa-comments', '1', 'dktj:loan:employee', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(517, 516, '{0,1,500,515,516}', '导出', 517, 'MENU_TYPE_MENU_PERMISSION', '/dktj/loan/exportEmpLoan', 'dktjExportEmpLoan', 'x-fa fa-comments', '1', 'dktj:loan:exportemploan', null, null, 1, now(), 1, now(), false);
-INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(518, 515, '{0,1,500,515}', '员工日均', 518, 'MENU_TYPE_MENU_MENU', '/dktj/loan/empAverage', 'dktjloan', 'x-fa fa-comments', '1', 'dktj:loan:empaverage', null, null, 1, now(), 1, now(), false);
+INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(518, 515, '{0,1,500,515}', '员工日均', 518, 'MENU_TYPE_MENU_MENU', '/dktj/loan/empAverage', 'dktjloanempavg', 'x-fa fa-comments', '1', 'dktj:loan:empaverage', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(519, 518, '{0,1,500,515,518}', '导出', 519, 'MENU_TYPE_MENU_PERMISSION', '/dktj/loan/exportEmpAvgLoan', 'dktjExportEmpAvgLoan', 'x-fa fa-comments', '1', 'dktj:loan:exportempavgloan', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(520, 515, '{0,1,500,515}', '机构时点', 520, 'MENU_TYPE_MENU_MENU', '/dktj/loan/organization', 'dktjloan', 'x-fa fa-comments', '1', 'dktj:loan:organization', null, null, 1, now(), 1, now(), false);
 INSERT INTO bps_78000.t_sys_menu(id, parent_id, parent_ids, name, sort, type, uri, target, icon, is_show, permission, description, remarks, create_by, create_time, update_by, update_time, del_flag) VALUES(521, 520, '{0,1,500,515,520}', '导出', 521, 'MENU_TYPE_MENU_PERMISSION', '/dktj/loan/exportOrgLoan', 'dktjExportOrgLoan', 'x-fa fa-comments', '1', 'dktj:loan:exportorgloan', null, null, 1, now(), 1, now(), false);
@@ -115,6 +115,10 @@ insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,creat
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(228,'获取指定模板下的岗位列表及分成比例 ','/dktj/template/getTemplateDetailList','dktj:template:gettemplatedetaillist','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(229,'获取账号对应的模板列表 ','/dktj/template/getccounttemplatelist','dktj:template:getccounttemplatelist','手工写入权限',1,now(),1,now());
 insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(230,'变更账号对应的模板 ','/dktj/template/alteraccounttemplate','dktj:template:alteraccounttemplate','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(231,'获取机构贷款时点余额 ','/dktj/loan/organization','dktj:loan:organization','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(232,'获取机构贷款日均余额 ','/dktj/loan/orgAverage','dktj:loan:orgaverage','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(233,'获取员工贷款时点余额 ','/dktj/loan/employee','dktj:loan:employee','手工写入权限',1,now(),1,now());
+insert into bps_78000.t_sys_api (id, name,uri,permission,remarks,create_by,create_time,update_by,update_time) values(234,'获取员工贷款日均余额 ','/dktj/loan/empAverage','dktj:loan:empaverage','手工写入权限',1,now(),1,now());
 
 
 
@@ -149,6 +153,10 @@ insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 228, 'DATA_SCOPE_ALL', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 229, 'DATA_SCOPE_ALL', now(), 1);
 insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 230, 'DATA_SCOPE_ALL', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 231, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 232, 'DATA_SCOPE_ORGANIZATION_AND_CHILD', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 233, 'DATA_SCOPE_SELF', now(), 1);
+insert into bps_78000.t_sys_role_permission(role_id, api_id, data_scope, create_time, create_by ) VALUES (1, 234, 'DATA_SCOPE_SELF', now(), 1);
 
 
 
@@ -418,6 +426,7 @@ INSERT INTO bps_78000.t_dktj_loan_handle_config(type, org_code, ln_curr_date, ln
 INSERT INTO bps_78000.t_dktj_loan_handle_config(type, org_code, ln_curr_date, ln_next_date, update_by, update_time) VALUES ('7', '78050', null, '2021-01-01', 1, now());
 INSERT INTO bps_78000.t_dktj_loan_handle_config(type, org_code, ln_curr_date, ln_next_date, update_by, update_time) VALUES ('7', '78053', null, '2021-01-01', 1, now());
 INSERT INTO bps_78000.t_dktj_loan_handle_config(type, org_code, ln_curr_date, ln_next_date, update_by, update_time) VALUES ('7', '78054', null, '2021-01-01', 1, now());
+INSERT INTO bps_78000.t_dktj_loan_handle_config(type, org_code, ln_curr_date, ln_next_date, update_by, update_time) VALUES ('1', '78003', null, '2025-01-01', 1, now());
 
 
 

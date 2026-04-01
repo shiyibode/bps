@@ -174,7 +174,7 @@
             cs.status
         FROM bps_78000.t_dktj_unbound_customer t
                  LEFT JOIN bps_78000.t_dktj_customer_status cs ON t.xd_customer_no = cs.xd_customer_no AND t.org_code = cs.org_code AND cs.valid_flag = true
-        WHERE t.account_no = #{1} AND t.org_code = #{0}
+        WHERE t.account_no = #{accountNo} AND t.org_code = #{orgCode}
     </select>
 
     <!-- 通过贷款账号查找未绑定客户的完整信息(一个客户在一个机构只有一个status) 包含贷款账号信息，只能返回一条纪律-->
@@ -353,7 +353,7 @@
 
     <!-- 通过信贷客户号删除未绑定到员工的客户（用于提交绑定申请后删除bps_78000.t_dktj_unbound_customer表中记录） -->
     <delete id="deleteUnboundCustomerInfoByXdCustomerNo" >
-        DELETE FROM bps_78000.t_dktj_unbound_customer WHERE xd_customer_no = #{1} AND org_code = #{0} and account_no = #{2}
+        DELETE FROM bps_78000.t_dktj_unbound_customer WHERE xd_customer_no = #{xdCustomerNo} AND org_code = #{orgCode} and account_no = #{accountNo}
     </delete>
 
 
@@ -1095,7 +1095,8 @@
         FROM public.t_sys_user u
         LEFT JOIN public.t_sys_user_organization uo ON u.id = uo.user_id
         LEFT JOIN public.t_sys_organization o ON uo.organization_id = o.id
-        WHERE u.code = #{tellerCode} AND status = 1 AND uo.del_flag = false
+        LEFT JOIN public.t_sys_user_status s on u.id = s.user_id
+        WHERE u.code = #{tellerCode} AND uo.valid_flag = true and s.valid_flag = true and s.status = 'USER_STATUS_NORMAL'
     </select>
 
     <delete id="deleteById">
@@ -1129,7 +1130,7 @@
             <if test="registerAccountNo != null and registerAccountNo != '' " >
                 register_account_no,
             </if>
-            <if test="createBy != null and createBy.id != null" >
+            <if test="createBy != null " >
                 create_by,
             </if>
             <if test="createTime != null " >
@@ -1161,8 +1162,8 @@
             <if test="registerAccountNo != null and registerAccountNo != '' " >
                 #{registerAccountNo},
             </if>
-            <if test="createBy != null and createBy.id != null">
-                #{createBy.id},
+            <if test="createBy != null ">
+                #{createBy},
             </if>
             <if test="createTime != null">
                 #{createTime}
@@ -1349,11 +1350,13 @@
           o.code AS organizationCode,
           o.name AS organizationName,
           uo.start_date,
-          us.status
+          us.status,
+          tsd.name as status_str
         FROM public.t_sys_user a
         LEFT JOIN public.t_sys_user_organization uo ON a.id = uo.user_id
         LEFT JOIN public.t_sys_organization o ON uo.organization_id = o.id
         LEFT JOIN public.t_sys_user_status us on uo.user_id = us.user_id
+        LEFT JOIN public.t_sys_dictionary tsd on us.status = tsd.code
         <where>
             us.status = 'USER_STATUS_NORMAL' AND uo.valid_flag = true AND a.del_flag = false AND o.del_flag = false AND a.code NOT LIKE 'user_%' AND a.code NOT LIKE 'admin%'
             <if test="userCodeOrName != null and userCodeOrName != ''">
@@ -1420,8 +1423,8 @@
             <if test="updateTime != null " >
                 update_time = #{updateTime},
             </if>
-            <if test="updateBy != null and updateBy.id != null" >
-                update_by = #{updateBy.id}
+            <if test="updateBy != null " >
+                update_by = #{updateBy}
             </if>
         </set>
         WHERE id = #{id}
@@ -1467,8 +1470,8 @@
             <if test="updateTime != null " >
                 update_time = #{updateTime},
             </if>
-            <if test="updateBy != null and updateBy.id != null" >
-                update_by = #{updateBy.id}
+            <if test="updateBy != null " >
+                update_by = #{updateBy}
             </if>
         </set>
         WHERE id = #{id}
@@ -1520,7 +1523,7 @@
             <if test="checkStatus != null and checkStatus != '' " >
                 check_status,
             </if>
-            <if test="createBy != null and createBy.id != null" >
+            <if test="createBy != null " >
                 create_by,
             </if>
             <if test="createTime != null " >
@@ -1546,8 +1549,8 @@
             <if test="checkStatus != null and checkStatus != '' " >
                 #{checkStatus},
             </if>
-            <if test="createBy != null and createBy.id != null">
-                #{createBy.id},
+            <if test="createBy != null ">
+                #{createBy},
             </if>
             <if test="createTime != null">
                 #{createTime}
@@ -1584,8 +1587,8 @@
             <if test="checkStatus != null and checkStatus != '' " >
                 check_status = #{checkStatus},
             </if>
-            <if test="createBy != null and createBy.id != null" >
-                create_by = #{createBy.id},
+            <if test="createBy != null " >
+                create_by = #{createBy},
             </if>
             <if test="createTime != null " >
                 create_time = #{create_time}
@@ -1597,6 +1600,28 @@
     <select id="getValidEmployeeCustomerByAccountNoAndOrg" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="org.nmgns.bps.dktj.entity.EmployeeCustomer">
         SELECT * FROM bps_78000.t_dktj_employee_customer WHERE account_no = #{accountNo} AND org_code = #{orgCode} AND valid_flag = TRUE
     </select>
+    
+    <insert id="insertLoanTaskDetail" parameterType="org.nmgns.bps.dktj.entity.TellerPercentage">
+        INSERT INTO bps_78000.t_dktj_employee_customer_task_detail
+        Values (
+                #{empCstId},
+                #{tellerCode},
+                #{percentage},
+                #{createTime},
+                #{createBy}
+               )
+    </insert>
+
+    <select id="getLoanTaskDetailByEmpCstId" parameterType="java.lang.Long" resultType="org.nmgns.bps.dktj.entity.TellerPercentage">
+        select t.emp_cst_id,t.teller_code,u.name as teller_name,t.percentage
+        from bps_78000.t_dktj_employee_customer_task_detail t
+            left join public.t_sys_user u on t.teller_code = u.code
+        where emp_cst_id = #{empCstId}
+    </select>
+
+    <delete id="deleteLoanTaskDetailByEmpCstId" parameterType="java.lang.Long">
+        delete from bps_78000.t_dktj_employee_customer_task_detail where emp_cst_id = #{empCstId}
+    </delete>
 
 
 </mapper>

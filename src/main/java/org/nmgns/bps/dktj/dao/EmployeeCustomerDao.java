@@ -5,10 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.nmgns.bps.dktj.dto.CustomerOrgAndStatus;
 import org.nmgns.bps.dktj.dto.CustomerStatus;
 import org.nmgns.bps.dktj.dto.UserInfoForBind;
-import org.nmgns.bps.dktj.entity.AccountShareInfo;
-import org.nmgns.bps.dktj.entity.AccountTemplate;
-import org.nmgns.bps.dktj.entity.EmployeeCustomer;
-import org.nmgns.bps.dktj.entity.SpecialAccountType;
+import org.nmgns.bps.dktj.entity.*;
 
 import java.util.List;
 
@@ -122,4 +119,10 @@ public interface EmployeeCustomerDao {
     Long findCount(EmployeeCustomer ec);
 
     List<EmployeeCustomer> findList(EmployeeCustomer ec);
+
+    void insertLoanTaskDetail(TellerPercentage loanTaskDetail);
+
+    List<TellerPercentage> getLoanTaskDetailByEmpCstId(Long empCstId);
+
+    void deleteLoanTaskDetailByEmpCstId(Long empCstId);
 }

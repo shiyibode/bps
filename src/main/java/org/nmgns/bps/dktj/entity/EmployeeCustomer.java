@@ -1,5 +1,6 @@
 package org.nmgns.bps.dktj.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.nmgns.bps.system.utils.base.BaseDataScopePageEntity;
@@ -37,6 +38,8 @@ public class EmployeeCustomer extends BaseDataScopePageEntity<EmployeeCustomer> 
     private Long templateId;        //模板类型id
     private List<AccountShareInfo> accountShareInfoList;    //员工分成明细
     private Long specialAccountTypeId;      //标记贷款账号：1-公司业务中心贷款 2-小微贷款 3-通汇贷款 4-阿吉奈贷款
+    private Boolean taskAllBelongMainTellerFlag;  //任务数全部归属于主营销人员标志
+    private List<TellerPercentage> tellerTaskPercentageList;
 
     //t_dktj_employee_customer表中没有，但是用来搜索的条件而添加的属性
     private Long organizationId;
@@ -126,4 +129,25 @@ public class EmployeeCustomer extends BaseDataScopePageEntity<EmployeeCustomer> 
         else if (flag.equals(FLAG_RELEASED_STATUS_RELEASED)) return "客户状态由流动转固定时释放的客户";
         else return null;
     }
+
+    // 以字符串形式返回任务数分成信息
+    public String getTellerTaskPercentageStr() {
+        if (tellerTaskPercentageList != null && !tellerTaskPercentageList.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (org.nmgns.bps.dktj.entity.TellerPercentage tp : tellerTaskPercentageList) {
+                sb.append(tp.getTellerName());
+                sb.append("-");
+                sb.append(tp.getTellerCode());
+                sb.append(":");
+                sb.append(tp.getPercentage()*100);
+                sb.append("%, ");
+            }
+            return StrUtil.removeSuffix(sb.toString(),", ");
+        }
+
+        return null;
+    }
+
+
+
 }
