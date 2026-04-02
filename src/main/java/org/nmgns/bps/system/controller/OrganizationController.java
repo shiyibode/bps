@@ -35,6 +35,7 @@ public class OrganizationController {
             responseJson.setSuccess(Boolean.TRUE);
             responseJson.setMsg("获取机构列表成功");
         }catch (Exception e){
+            e.printStackTrace();
             responseJson.setSuccess(Boolean.FALSE);
             responseJson.setMsg(e.getMessage());
         }
@@ -114,6 +115,26 @@ public class OrganizationController {
         }catch (Exception e){
             return new ArrayList<Dictionary>();
         }
+    }
+
+    /**
+     * 获取当前登录用户登录时，机构菜单应该展开哪个节点
+     */
+    @RequestMapping("/getExpandOrganizationId")
+    @PreAuthorize("hasAuthority('sys:organization:getorganizationtree')")
+    public ResponseJson getExpandOrganizationId() {
+        ResponseJson responseJson = new ResponseJson();
+        try {
+            Organization o = organizationService.getExpandNodeByCurrentLoginUser();
+            responseJson.setSuccess(Boolean.TRUE);
+            responseJson.setData(o.getId());
+            responseJson.setMsg("获取机构id成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            responseJson.setSuccess(Boolean.FALSE);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
     }
 
 

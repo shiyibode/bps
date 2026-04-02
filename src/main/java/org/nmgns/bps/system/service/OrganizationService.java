@@ -69,8 +69,8 @@ public class OrganizationService {
         List<Organization> orgList = organizationDao.get(orgPara);
 
         //设置“类型”的中文名称
-        for(int i=0;i<orgListCount;i++){
-            orgList.get(i).setTypeStr(dictionaryService.getDictionaryNameByCode(orgList.get(i).getType()));
+        for(Organization org:orgList){
+            org.setTypeStr(dictionaryService.getDictionaryNameByCode(org.getType()));
         }
 
         PageData<Organization> orgPageData = new PageData<>();
@@ -183,7 +183,7 @@ public class OrganizationService {
         List<Role> roleList = roleDao.getRoleListByUserId(currentUser.getId());
         List<String> roleEnNameList = new ArrayList<String>();
         for (Role role : roleList){
-            roleEnNameList.add(role.getName());
+            roleEnNameList.add(role.getEnName());
         }
 
         // 如果有“支行全部机构列表角色”，就将用户在职的支行内，全部部门和网点查找出来
@@ -268,6 +268,19 @@ public class OrganizationService {
     public Organization getBranchByOrgCode(String orgCode){
         if(StrUtil.isBlank(orgCode)) return null;
         return organizationDao.getBranchByOrgCode(orgCode);
+    }
+
+    /**
+     * 获取当前登录用户登录时，机构菜单应该展开哪个节点
+     * @return o 要展开节点的机构
+     */
+    public Organization getExpandNodeByCurrentLoginUser(){
+        User currentUser = userUtils.getCurrentLoginedUser();
+        if (null == currentUser || currentUser.getId() == null) throw new RuntimeException("获取当前用户失败");
+
+        Organization o = organizationDao.getExpandNodeByUserId(currentUser.getId());
+        if (o==null) throw new RuntimeException("获取用户的expand机构树失败");
+        return o;
     }
 
 

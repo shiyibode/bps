@@ -33,4 +33,6 @@ public interface OrganizationDao {
     public Organization getSubBranchByOrgCode(String orgCode);
 
     public Organization getBranchByOrgCode(String orgCode);
+
+    Organization getExpandNodeByUserId(Long userId);
 }
