@@ -141,11 +141,11 @@
     <!-- 获取员工在职的一级支行，中心支行部门员工则返回中支id -->
     <select id="getExpandNodeByUserId" parameterType="java.lang.Long" resultType="org.nmgns.bps.system.entity.Organization">
         select
-            case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') then o.id else op.id end as id
-             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') then o.name else op.name end as name
-             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') then o.grade else op.grade end as grade
-             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') then o.type else op.type end as type
-             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') then o.code else op.code end as code
+            case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') or op.type is null then o.id else op.id end as id
+             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') or op.type is null then o.name else op.name end as name
+             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') or op.type is null then o.grade else op.grade end as grade
+             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') or op.type is null then o.type else op.type end as type
+             ,case when op.type in('ORGANIZATION_TYPE_300','ORGANIZATION_TYPE_200') or op.type is null then o.code else op.code end as code
         from
             t_sys_user u
                 left join t_sys_user_organization uo on u.id = uo.user_id and uo.valid_flag = true

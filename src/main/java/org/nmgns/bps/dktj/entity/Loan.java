@@ -1,12 +1,12 @@
 package org.nmgns.bps.dktj.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.nmgns.bps.system.utils.base.BaseDataScopeEntity;
+import org.nmgns.bps.system.utils.base.BaseDataScopePageEntity;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class Loan extends BaseDataScopeEntity {
+public class Loan extends BaseDataScopePageEntity<Loan> {
 
     private String tellerCode;
     private String tellerName;

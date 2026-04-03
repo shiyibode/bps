@@ -16,4 +16,12 @@ public interface LoanDao {
 
     List<Loan> findEmployeeAvgLoanList(Loan loan);
 
+    Long findTaskEmployeePageCount(Loan loan);
+
+    List<String> findTaskEmployeePage(Loan loan);
+
+    Long findTaskEmployeeAvgPageCount(Loan loan);
+
+    List<String> findTaskEmployeeAvgPage(Loan loan);
+
 }

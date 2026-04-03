@@ -1,6 +1,8 @@
 package org.nmgns.bps.dktj.controller;
 
+import org.nmgns.bps.cktj.entity.Deposit;
 import org.nmgns.bps.dktj.entity.Loan;
+import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,20 +71,17 @@ public class LoanController {
     public @ResponseBody Object employeeLoan(@RequestBody Loan loan){
         ResponseJson responseJson = new ResponseJson();
 
-        List<Loan>  result;
         try {
-            result = loanSerivce.findEmployeeLoanList(loan);
+            PageData<Loan> loanPageData = loanSerivce.findEmployeeLoanList(loan);
+            responseJson.setSuccess(true);
+            responseJson.setData(loanPageData.getList());
+            responseJson.setTotal(loanPageData.getTotal());
+            responseJson.setMsg("获取员工的贷款任务完成情况成功");
         }catch (Exception e){
             e.printStackTrace();
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());
-            return responseJson;
         }
-
-        responseJson.setSuccess(true);
-        responseJson.setData(result);
-        responseJson.setMsg("获取员工时点贷款成功");
-        responseJson.setTotal((long)result.size());
         return responseJson;
     }
 
@@ -91,20 +90,17 @@ public class LoanController {
     public @ResponseBody Object employeeAvgLoan(@RequestBody Loan loan){
         ResponseJson responseJson = new ResponseJson();
 
-        List<Loan>  result;
         try {
-            result = loanSerivce.findEmployeeAvgLoanList(loan);
+            PageData<Loan> loanPageData = loanSerivce.findEmployeeAvgLoanList(loan);
+            responseJson.setSuccess(true);
+            responseJson.setData(loanPageData.getList());
+            responseJson.setTotal(loanPageData.getTotal());
+            responseJson.setMsg("获取员工的贷款任务完成情况成功");
         }catch (Exception e){
             e.printStackTrace();
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());
-            return responseJson;
         }
-
-        responseJson.setSuccess(true);
-        responseJson.setData(result);
-        responseJson.setMsg("获取员工日均贷款成功");
-        responseJson.setTotal((long)result.size());
         return responseJson;
     }
 

@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.nmgns.bps.cktj.dao.DepositDao;
 import org.nmgns.bps.cktj.entity.Deposit;
 import org.nmgns.bps.cktj.utils.ExcelExportUtils;
+import org.nmgns.bps.system.dao.OrganizationDao;
+import org.nmgns.bps.system.entity.Organization;
 import org.nmgns.bps.system.entity.UserOrganization;
 import org.nmgns.bps.system.service.ApiService;
 import org.nmgns.bps.system.utils.DataScopeUtils;
@@ -27,6 +29,8 @@ public class DepositService {
     private ApiService apiService;
     @Autowired
     private UserUtils userUtils;
+    @Autowired
+    private OrganizationDao organizationDao;
 
     /**
      * 员工任务时点
@@ -56,6 +60,11 @@ public class DepositService {
         if (deposit.getStartDate().after(deposit.getEndDate())) throw new RuntimeException("起始日期大于终止日期");
         long days = DateUtil.between(deposit.getStartDate(), deposit.getEndDate(), DateUnit.DAY) + 1;
         if (days > 31) throw new RuntimeException("最长的跨度区间不得超过31天");
+
+//        //网点的层级不得超过一级支行
+//        Organization org = organizationDao.getOrganizationById(deposit.getOrganizationId());
+//        if (org == null) throw new RuntimeException("网点不存在");
+//        if (org.getGrade() < 3) throw new RuntimeException("请选择一级支行及以下的机构");
 
 
         if (deposit.getDepositType().equals("DEPOSIT_TYPE_ACCOUNTING_WAY")) {
