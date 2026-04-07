@@ -863,6 +863,7 @@ public class EmployeeCustomerSerivce {
         EmployeeCustomer ec = new EmployeeCustomer();
         ec.setOrgCode(dbCoas.getOrgCode());
         ec.setXdCustomerNo(dbCoas.getXdCustomerNo());
+        ec.setCreateBy(userUtils.getCurrentLoginedUser().getId());
         employeeCustomerDao.changeStatusToFix(ec);
 
     }

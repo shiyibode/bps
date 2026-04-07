@@ -480,13 +480,13 @@ BEGIN
     END IF;
 
     -- 1-判断当日是否已经发生过变更
-    select status from t_dktj_customer_status where org_code = para_org_code and xd_customer_no = para_xd_customer_no and para_date = start_date into tmp_status;
+    select status from bps_78000.t_dktj_customer_status where org_code = para_org_code and xd_customer_no = para_xd_customer_no and para_date = start_date into tmp_status;
     IF tmp_status IS NOT NULL THEN
         RAISE EXCEPTION '机构号: %, 客户: % 在 % 日已发生过变更，不允许再此变更',para_org_code,para_xd_customer_no,para_date;
     END IF;
 
     -- 2-判断当前状态是否已经为固定
-    select status,id from t_dktj_customer_status where org_code = para_org_code and xd_customer_no = para_xd_customer_no and para_date >= start_date AND para_date <= coalesce(end_date,'2099-12-31') and valid_flag = TRUE into tmp_status,tmp_id;
+    select status,id from bps_78000.t_dktj_customer_status where org_code = para_org_code and xd_customer_no = para_xd_customer_no and para_date >= start_date AND para_date <= coalesce(end_date,'2099-12-31') and valid_flag = TRUE into tmp_status,tmp_id;
     IF tmp_status ISNULL THEN
         RAISE EXCEPTION '无法获取到客户当前生效的状态';
     ELSEIF tmp_status = '1' THEN
@@ -496,23 +496,23 @@ BEGIN
     END IF;
 
     -- 3-判断所有的账户是否已经复核完成
-    SELECT count(*) FROM t_dktj_employee_customer WHERE xd_customer_no = para_xd_customer_no AND (register_check_status = '0' OR alter_check_status = '0') AND org_code = para_org_code INTO tmp_count;
+    SELECT count(*) FROM bps_78000.t_dktj_employee_customer WHERE xd_customer_no = para_xd_customer_no AND (register_check_status = '0' OR alter_check_status = '0') AND org_code = para_org_code INTO tmp_count;
     IF tmp_count > 0 THEN
         RAISE EXCEPTION '信贷客户号: % 机构: % 尚有 % 个账户未复核完成,调动释放账户服务无法继续执行',para_xd_customer_no,para_org_code,tmp_count;
     END IF;
 
     -- 3-遍历客户当前拥有的、归属机构不在本机构的账户，释放归属柜员不在本机构的账户
-    select_sql := 'select * from t_dktj_employee_customer where org_code = $1 and xd_customer_no = $2 and valid_flag = true';
+    select_sql := 'select * from bps_78000.t_dktj_employee_customer where org_code = $1 and xd_customer_no = $2 and valid_flag = true';
     FOR r IN EXECUTE select_sql USING para_org_code,para_xd_customer_no LOOP
-        SELECT get_org_code_by_teller_code(r.teller_code,para_date) INTO tmp_org_code;
+        SELECT bps_78000.get_org_code_by_teller_code(r.teller_code,para_date) INTO tmp_org_code;
         IF tmp_org_code ISNULL THEN
             RAISE EXCEPTION '无法通过柜员号: %, 日期: % 获取到柜员在职机构',r.teller_code,para_date;
         END IF;
         IF tmp_org_code != para_org_code THEN
             -- 3.1设置原记录的valid_flag为false
-            UPDATE t_dktj_employee_customer SET end_date = before_day,valid_flag = FALSE WHERE id = r.id;
+            UPDATE bps_78000.t_dktj_employee_customer SET end_date = before_day,valid_flag = FALSE WHERE id = r.id;
             -- 3.2在未绑定列表中写入该条记录
-            INSERT INTO t_dktj_unbound_customer(xd_customer_no, account_no, account_open_date, customer_name, start_date, org_code, identity_type, identity_no, customer_type, date, create_time, flag) VALUES (r.xd_customer_no,r.account_no,r.account_open_date,r.customer_name,para_date,para_org_code,r.identity_type,r.identity_no,r.customer_type,para_date,now(),'3');
+            INSERT INTO bps_78000.t_dktj_unbound_customer(xd_customer_no, account_no, account_open_date, customer_name, start_date, org_code, identity_type, identity_no, customer_type, date, create_time, flag) VALUES (r.xd_customer_no,r.account_no,r.account_open_date,r.customer_name,para_date,para_org_code,r.identity_type,r.identity_no,r.customer_type,para_date,now(),'3');
             -- 3.3设置账户分成规则中的维护人的有效标志为false
 --             SELECT asi.id FROM t_dktj_account_share_info asi left join t_dktj_account_template a on asi.account_template_id = a.id left join t_dktj_template_detail td on td.id = asi.template_detail_id left join t_dktj_position p on td.position_id = p.id where a.org_code = para_org_code and a.account_no = r.account_no and p.type = '1' AND asi.valid_flag = true INTO tmp_asi_id;
 --             IF tmp_asi_id is NOT null THEN
@@ -522,10 +522,10 @@ BEGIN
     END LOOP;
 
     -- 4-设置原状态的valid_flag为false
-    UPDATE t_dktj_customer_status SET valid_flag = FALSE,end_date = before_day WHERE id = tmp_id;
+    UPDATE bps_78000.t_dktj_customer_status SET valid_flag = FALSE,end_date = before_day WHERE id = tmp_id;
 
     -- 5-写入新状态
-    INSERT INTO t_dktj_customer_status(org_code, xd_customer_no, status, start_date, end_date, parent_id, valid_flag, create_by, create_time, register_account_no, check_status) VALUES (para_org_code, para_xd_customer_no, '1', para_date, null, tmp_id, TRUE, para_teller_id, now(), NULL, '1');
+    INSERT INTO bps_78000.t_dktj_customer_status(org_code, xd_customer_no, status, start_date, end_date, parent_id, valid_flag, create_by, create_time, register_account_no, check_status) VALUES (para_org_code, para_xd_customer_no, '1', para_date, null, tmp_id, TRUE, para_teller_id, now(), NULL, '1');
 
     RETURN TRUE;
 

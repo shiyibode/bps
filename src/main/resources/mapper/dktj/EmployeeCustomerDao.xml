@@ -1251,8 +1251,8 @@
                    coalesce(p.card_num,c.licence_code) identity_no
             from
                  bps_78000.t_dktj_customer_status a
-                 left join t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
-                 left join t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
+                 left join bps_78000.t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
+                 left join bps_78000.t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
         ) t
         LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
         <where>
@@ -1303,8 +1303,8 @@
                 coalesce(p.card_num,c.licence_code) identity_no
             from
                 bps_78000.t_dktj_customer_status a
-            left join t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
-            left join t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
+            left join bps_78000.t_ods_dul_t01_cr_prvt_ip_inf_h  p on p.cust_id = a.xd_customer_no
+            left join bps_78000.t_ods_dul_t01_cr_corp_ip_inf_h c on c.cust_id = a.xd_customer_no
         ) t
         LEFT JOIN public.t_sys_organization o ON o.code = t.org_code
         <where>
@@ -1381,7 +1381,7 @@
 <!--    </select>-->
 
     <select id="changeStatusToFix" statementType="CALLABLE" parameterType="org.nmgns.bps.dktj.entity.EmployeeCustomer" resultType="java.lang.Boolean">
-        {CALL dktj_release_customer_after_change_status_to_fix(#{orgCode,mode=IN,jdbcType=VARCHAR},#{xdCustomerNo,mode=IN,jdbcType=VARCHAR},#{tellerId,mode=IN,jdbcType=BIGINT}) }
+        {CALL bps_78000.dktj_release_customer_after_change_status_to_fix(#{orgCode,mode=IN,jdbcType=VARCHAR},#{xdCustomerNo,mode=IN,jdbcType=VARCHAR},#{createBy,mode=IN,jdbcType=BIGINT}) }
     </select>
 
     <select id="getUncheckedCustomerStatusByXdCustomerNoAndOrg" parameterType="org.nmgns.bps.dktj.dto.CustomerStatus" resultType="org.nmgns.bps.dktj.dto.CustomerStatus">

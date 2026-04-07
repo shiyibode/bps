@@ -95,6 +95,7 @@
     <select id="findOrganizationAvgLoanList" parameterType="org.nmgns.bps.dktj.entity.Loan" resultType="org.nmgns.bps.dktj.entity.Loan" >
         SELECT
         <include refid="avgOrgLoanColumns"/>
+        ,#{loanType} AS loanType
         FROM
         bps_78000.t_dktj_organization_loan_detail a
         LEFT JOIN public.t_sys_organization lno on lno.code = a.ln_org_code

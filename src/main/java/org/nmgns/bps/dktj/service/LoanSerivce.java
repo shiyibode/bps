@@ -37,7 +37,7 @@ public class LoanSerivce {
         //网点的层级不得超过一级支行
         Organization org = organizationDao.getOrganizationById(loan.getOrganizationId());
         if (org == null) throw new RuntimeException("网点不存在");
-        if (org.getGrade() < 3) throw new RuntimeException("请选择一级支行及以下的机构");
+//        if (org.getGrade() < 3) throw new RuntimeException("请选择一级支行及以下的机构");
 
         loan.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/dktj/loan/organization").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "lno,blo", ""));
 
