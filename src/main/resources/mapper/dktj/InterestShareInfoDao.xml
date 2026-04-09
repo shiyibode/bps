@@ -870,10 +870,10 @@
             p.type AS position_type
         FROM
             bps_78000.t_dktj_account_share_info s
-            LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id
-            LEFT JOIN t_dktj_template t ON dat.template_id = t.id
-            LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
-            LEFT JOIN t_dktj_position p ON td.position_id = p.id
+            LEFT JOIN bps_78000.t_dktj_account_template dat ON s.account_template_id = dat.id
+            LEFT JOIN bps_78000.t_dktj_template t ON dat.template_id = t.id
+            LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+            LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
         WHERE s.id = #{id}
     </select>
 
@@ -897,16 +897,16 @@
             os.teller_code AS old_teller_code,
             ou.name AS old_teller_name
         FROM
-            t_dktj_account_share_info s
-            LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id AND dat.valid_flag = TRUE
-            LEFT JOIN t_dktj_template t ON dat.template_id = t.id
-            LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
-            LEFT JOIN t_dktj_position p ON td.position_id = p.id
-            LEFT JOIN t_sys_user u ON s.teller_code = u.code
-            LEFT JOIN t_dktj_account_share_info os ON s.parent_id = os.id
-            LEFT JOIN t_sys_user ou ON os.teller_code = ou.code
-            LEFT JOIN t_sys_organization lno ON dat.org_code = lno.code
-            LEFT JOIN (SELECT loan_account,cust_id,c_name FROM t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
+        bps_78000.t_dktj_account_share_info s
+            LEFT JOIN bps_78000.t_dktj_account_template dat ON s.account_template_id = dat.id AND dat.valid_flag = TRUE
+            LEFT JOIN bps_78000.t_dktj_template t ON dat.template_id = t.id
+            LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+            LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+            LEFT JOIN public.t_sys_user u ON s.teller_code = u.code
+            LEFT JOIN bps_78000.t_dktj_account_share_info os ON s.parent_id = os.id
+            LEFT JOIN public.t_sys_user ou ON os.teller_code = ou.code
+            LEFT JOIN public.t_sys_organization lno ON dat.org_code = lno.code
+            LEFT JOIN (SELECT loan_account,cust_id,c_name FROM bps_78000.t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM bps_78000.t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
         <where>
             s.alter_check_status = #{CHECK_STATUS_UNCHECKED}
             <if test="organizationId != null" >
@@ -950,16 +950,16 @@
         SELECT
             count(*)
         FROM
-        t_dktj_account_share_info s
-        LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id AND dat.valid_flag = TRUE
-        LEFT JOIN t_dktj_template t ON dat.template_id = t.id
-        LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
-        LEFT JOIN t_dktj_position p ON td.position_id = p.id
-        LEFT JOIN t_sys_user u ON s.teller_code = u.code
-        LEFT JOIN t_dktj_account_share_info os ON s.parent_id = os.id
-        LEFT JOIN t_sys_user ou ON os.teller_code = ou.code
-        LEFT JOIN t_sys_organization lno ON dat.org_code = lno.code
-        LEFT JOIN (SELECT loan_account,cust_id,c_name FROM t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
+        bps_78000.t_dktj_account_share_info s
+        LEFT JOIN bps_78000.t_dktj_account_template dat ON s.account_template_id = dat.id AND dat.valid_flag = TRUE
+        LEFT JOIN bps_78000.t_dktj_template t ON dat.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+        LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+        LEFT JOIN public.t_sys_user u ON s.teller_code = u.code
+        LEFT JOIN bps_78000.t_dktj_account_share_info os ON s.parent_id = os.id
+        LEFT JOIN public.t_sys_user ou ON os.teller_code = ou.code
+        LEFT JOIN public.t_sys_organization lno ON dat.org_code = lno.code
+        LEFT JOIN (SELECT loan_account,cust_id,c_name FROM bps_78000.t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM bps_78000.t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
         <where>
             s.alter_check_status = #{CHECK_STATUS_UNCHECKED}
             <if test="organizationId != null" >
@@ -989,7 +989,7 @@
     </select>
 
     <select id="getPositionList" resultType="org.nmgns.bps.dktj.entity.Position">
-        SELECT id,name FROM t_dktj_position ORDER BY id;
+        SELECT id,name FROM bps_78000.t_dktj_position ORDER BY id;
     </select>
 
 </mapper>
