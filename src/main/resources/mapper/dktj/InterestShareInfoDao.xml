@@ -15,11 +15,11 @@
             blo.name AS belong_org_name,
             #{queryType} AS query_type
         FROM
-            t_dktj_employee_interest_share a
-            LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-            LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-            LEFT JOIN t_dktj_template t ON a.template_id = t.id
-            LEFT JOIN t_dktj_position p ON a.position_id = p.id
+            bps_78000.t_dktj_employee_interest_share a
+            LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+            LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+            LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+            LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
         <where>
             <if test="startDate != null">
                 date >= #{startDate}
@@ -53,11 +53,8 @@
         </where>
         GROUP BY a.ln_org_code,a.belong_org_code,a.date,lno.name,blo.name,#{queryType},t.name,p.name HAVING sum(a.balance) != 0
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY a.date DESC, a.ln_org_code ASC, a.belong_org_code ASC
@@ -81,11 +78,11 @@
         #{startDate} AS start_date,
         #{endDate} AS end_date
         FROM
-        t_dktj_employee_interest_share a
-        LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-        LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-        LEFT JOIN t_dktj_template t ON a.template_id = t.id
-        LEFT JOIN t_dktj_position p ON a.position_id = p.id
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
         <where>
             <if test="startDate != null">
                 AND <![CDATA[ a.date >= #{startDate} ]]>
@@ -118,11 +115,8 @@
         </where>
         GROUP BY a.ln_org_code,a.belong_org_code,lno.name,blo.name,#{queryType},t.name,p.name,#{startDate},#{endDate} HAVING sum(a.balance) != 0
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY a.ln_org_code ASC, a.belong_org_code ASC
@@ -145,12 +139,12 @@
         blo.name AS belong_org_name,
         #{queryType} AS query_type
         FROM
-        t_dktj_employee_interest_share a
-        LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-        LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-        LEFT JOIN t_sys_user u ON u.code = a.teller_code
-        LEFT JOIN t_dktj_template t ON a.template_id = t.id
-        LEFT JOIN t_dktj_position p ON a.position_id = p.id
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
         <where>
             <if test="tellerCode != null and tellerCode != ''">
                 AND a.teller_code = #{tellerCode}
@@ -189,16 +183,158 @@
         </where>
         GROUP BY a.ln_org_code,a.belong_org_code,a.date,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name HAVING sum(a.balance) != 0
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY a.date DESC, a.ln_org_code ASC, a.belong_org_code ASC
             </otherwise>
         </choose>
+    </select>
+
+    <!-- 分页获取有时点利息的员工 -->
+    <select id="findEmployeeLoanInterestPageCount" parameterType="org.nmgns.bps.dktj.entity.InterestShareInfo" resultType="java.lang.Long">
+        select count(distinct teller_code) from (
+        SELECT
+        a.date,
+        a.ln_org_code,
+        a.teller_code,
+        u.name AS teller_name,
+        t.name AS template_name,
+        p.name AS position_name,
+        sum(a.balance) AS balance,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        #{queryType} AS query_type
+        FROM
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        <where>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <choose>
+                <!-- 核心系统利息 -->
+                <when test='queryType != null and queryType == "1"'>
+                    AND ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 汇总利息 -->
+                <when test='queryType != null and queryType == "2"'>
+                    AND (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 调入利息 -->
+                <when test='queryType != null and queryType == "3"'>
+                    AND ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS
+                    INTEGER[])) AND
+                    (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                </when>
+                <!-- 调出利息 -->
+                <when test='queryType != null and queryType == "4"'>
+                    AND ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    AND
+                    (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    )
+                </when>
+            </choose>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY
+        a.ln_org_code,a.belong_org_code,a.date,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name HAVING
+        sum(a.balance) != 0
+        ) t
+    </select>
+
+    <!-- 分页获取有时点利息的员工 -->
+    <select id="findEmployeeLoanInterestPage" parameterType="org.nmgns.bps.dktj.entity.InterestShareInfo" resultType="java.lang.String">
+        select teller_code from (
+        SELECT
+        a.date,
+        a.ln_org_code,
+        a.teller_code,
+        u.name AS teller_name,
+        t.name AS template_name,
+        p.name AS position_name,
+        sum(a.balance) AS balance,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        #{queryType} AS query_type
+        FROM
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        <where>
+            <if test="tellerCode != null and tellerCode != ''">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <if test="tellerName != null and tellerName != ''">
+                AND u.name = #{tellerName}
+            </if>
+            <if test="startDate != null">
+                <![CDATA[ AND a.date >= #{startDate} ]]>
+            </if>
+            <if test="endDate != null">
+                <![CDATA[ AND a.date <= #{endDate} ]]>
+            </if>
+            <choose>
+                <!-- 核心系统利息 -->
+                <when test='queryType != null and queryType == "1"'>
+                    AND ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 汇总利息 -->
+                <when test='queryType != null and queryType == "2"'>
+                    AND (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 调入利息 -->
+                <when test='queryType != null and queryType == "3"'>
+                    AND ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS
+                    INTEGER[])) AND
+                    (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                </when>
+                <!-- 调出利息 -->
+                <when test='queryType != null and queryType == "4"'>
+                    AND ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    AND
+                    (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    )
+                </when>
+            </choose>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY
+        a.ln_org_code,a.belong_org_code,a.date,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name HAVING
+        sum(a.balance) != 0
+        ) t group by teller_code
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY teller_code
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
     </select>
 
     <!-- 员工汇总利息 -->
@@ -219,12 +355,12 @@
         #{startDate} AS start_date,
         #{endDate} AS end_date
         FROM
-        t_dktj_employee_interest_share a
-        LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-        LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-        LEFT JOIN t_sys_user u ON u.code = a.teller_code
-        LEFT JOIN t_dktj_template t ON a.template_id = t.id
-        LEFT JOIN t_dktj_position p ON a.position_id = p.id
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
         <where>
             <if test="startDate != null">
                 date >= #{startDate}
@@ -260,11 +396,8 @@
         </where>
         GROUP BY a.ln_org_code,a.belong_org_code,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name,#{startDate},#{endDate} HAVING sum(a.balance) != 0
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY  a.ln_org_code ASC, a.belong_org_code ASC
@@ -272,16 +405,161 @@
         </choose>
     </select>
 
+    <!-- 分页获取有汇总利息的员工 -->
+    <select id="findEmployeeAvgLoanInterestPageCount" parameterType="org.nmgns.bps.dktj.entity.InterestShareInfo" resultType="java.lang.Long">
+        select count(distinct teller_code) from (
+        SELECT
+        a.ln_org_code,
+        a.teller_code,
+        u.name AS teller_name,
+        t.name AS template_name,
+        p.name AS position_name,
+        -- round(sum(a.balance)/${avgDays},2) AS balance,
+        sum(a.balance) AS balance,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        #{queryType} AS query_type,
+        ${avgDays} AS avg_days,
+        #{startDate} AS start_date,
+        #{endDate} AS end_date
+        FROM
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        <where>
+            <if test="startDate != null">
+                date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND date &lt;= #{endDate}
+            </if>
+            <if test="tellerCode != null and tellerCode != '' ">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <choose>
+                <!-- 核心系统利息 -->
+                <when test='queryType != null and queryType == "1"'>
+                    AND ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 汇总利息 -->
+                <when test='queryType != null and queryType == "2"'>
+                    AND (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 调入利息 -->
+                <when test='queryType != null and queryType == "3"'>
+                    AND ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS
+                    INTEGER[])) AND
+                    (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                </when>
+                <!-- 调出利息 -->
+                <when test='queryType != null and queryType == "4"'>
+                    AND ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    AND
+                    (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    )
+                </when>
+            </choose>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY
+        a.ln_org_code,a.belong_org_code,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name,#{startDate},#{endDate}
+        HAVING sum(a.balance) != 0
+        ) t
+    </select>
+
+    <!-- 分页获取有汇总利息的员工 -->
+    <select id="findEmployeeAvgLoanInterestPage" parameterType="org.nmgns.bps.dktj.entity.InterestShareInfo" resultType="java.lang.String">
+        select teller_code from (
+        SELECT
+        a.ln_org_code,
+        a.teller_code,
+        u.name AS teller_name,
+        t.name AS template_name,
+        p.name AS position_name,
+        -- round(sum(a.balance)/${avgDays},2) AS balance,
+        sum(a.balance) AS balance,
+        lno.name AS ln_org_name,
+        a.belong_org_code,
+        blo.name AS belong_org_name,
+        #{queryType} AS query_type,
+        ${avgDays} AS avg_days,
+        #{startDate} AS start_date,
+        #{endDate} AS end_date
+        FROM
+        bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN public.t_sys_user u ON u.code = a.teller_code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        <where>
+            <if test="startDate != null">
+                date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND date &lt;= #{endDate}
+            </if>
+            <if test="tellerCode != null and tellerCode != '' ">
+                AND a.teller_code = #{tellerCode}
+            </if>
+            <choose>
+                <!-- 核心系统利息 -->
+                <when test='queryType != null and queryType == "1"'>
+                    AND ( lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 汇总利息 -->
+                <when test='queryType != null and queryType == "2"'>
+                    AND (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                </when>
+                <!-- 调入利息 -->
+                <when test='queryType != null and queryType == "3"'>
+                    AND ( (lno.id != #{organizationId} AND NOT lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS
+                    INTEGER[])) AND
+                    (blo.id = #{organizationId} OR blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[])) )
+                </when>
+                <!-- 调出利息 -->
+                <when test='queryType != null and queryType == "4"'>
+                    AND ( (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    AND
+                    (blo.id != #{organizationId} AND NOT blo.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
+                    )
+                </when>
+            </choose>
+            <!-- 数据范围过滤 -->
+            ${sqlMap.dsf}
+        </where>
+        GROUP BY
+        a.ln_org_code,a.belong_org_code,lno.name,blo.name,#{queryType},a.teller_code,u.name,t.name,p.name,#{startDate},#{endDate}
+        HAVING sum(a.balance) != 0
+        ) t group by teller_code
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY teller_code
+            </otherwise>
+        </choose>
+        <if test="page != null and page.start >= 0 and page.pageSize > 0">
+            offset ${page.start} limit ${page.pageSize}
+        </if>
+    </select>
+
     <!-- 利息明细总个数 -->
     <select id="findCount" parameterType="org.nmgns.bps.dktj.entity.InterestShareInfo" resultType="java.lang.Long">
         SELECT count(*)
         FROM
-            t_dktj_employee_interest_share a
-            LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-            LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-            LEFT JOIN t_dktj_template t ON a.template_id = t.id
-            LEFT JOIN t_dktj_position p ON a.position_id = p.id
-            LEFT JOIN (SELECT cust_id,c_name FROM t_ods_dul_t01_cr_prvt_ip_inf_h UNION ALL SELECT cust_id,c_name FROM t_ods_dul_t01_cr_corp_ip_inf_h) i ON i.cust_id = a.xd_customer_no
+            bps_78000.t_dktj_employee_interest_share a
+            LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+            LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+            LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+            LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+            LEFT JOIN (SELECT cust_id,c_name FROM bps_78000.t_ods_dul_t01_cr_prvt_ip_inf_h UNION ALL SELECT cust_id,c_name FROM bps_78000.t_ods_dul_t01_cr_corp_ip_inf_h) i ON i.cust_id = a.xd_customer_no
         <where>
             <if test="organizationId != null" >
                 AND (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
@@ -322,12 +600,12 @@
             p.name AS position_name,
             i.c_name AS customer_name
         FROM
-            t_dktj_employee_interest_share a
-        LEFT JOIN t_sys_organization lno ON a.ln_org_code = lno.code
-        LEFT JOIN t_sys_organization blo ON a.belong_org_code = blo.code
-        LEFT JOIN t_dktj_template t ON a.template_id = t.id
-        LEFT JOIN t_dktj_position p ON a.position_id = p.id
-        LEFT JOIN (SELECT cust_id,c_name FROM t_ods_dul_t01_cr_prvt_ip_inf_h UNION ALL SELECT cust_id,c_name FROM t_ods_dul_t01_cr_corp_ip_inf_h) i ON i.cust_id = a.xd_customer_no
+            bps_78000.t_dktj_employee_interest_share a
+        LEFT JOIN public.t_sys_organization lno ON a.ln_org_code = lno.code
+        LEFT JOIN public.t_sys_organization blo ON a.belong_org_code = blo.code
+        LEFT JOIN bps_78000.t_dktj_template t ON a.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_position p ON a.position_id = p.id
+        LEFT JOIN (SELECT cust_id,c_name FROM bps_78000.t_ods_dul_t01_cr_prvt_ip_inf_h UNION ALL SELECT cust_id,c_name FROM bps_78000.t_ods_dul_t01_cr_corp_ip_inf_h) i ON i.cust_id = a.xd_customer_no
         <where>
             <if test="organizationId != null" >
                 AND (lno.id = #{organizationId} OR lno.parent_ids @> CAST(ARRAY[#{organizationId}] AS INTEGER[]))
@@ -357,11 +635,8 @@
             ${sqlMap.dsf}
         </where>
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY a.date DESC, a.ln_org_code ASC, a.teller_code ASC
@@ -594,7 +869,7 @@
             p.changeable AS position_changeable,
             p.type AS position_type
         FROM
-            t_dktj_account_share_info s
+            bps_78000.t_dktj_account_share_info s
             LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id
             LEFT JOIN t_dktj_template t ON dat.template_id = t.id
             LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
@@ -659,11 +934,8 @@
             ${sqlMap.dsf}
         </where>
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY dat.org_code ASC, dat.account_no DESC

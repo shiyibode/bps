@@ -1,9 +1,6 @@
 package org.nmgns.bps.dktj.controller;
 
-import org.nmgns.bps.dktj.entity.EmployeeCustomer;
-import org.nmgns.bps.dktj.entity.EmployeeInterest;
-import org.nmgns.bps.dktj.entity.InterestShareInfo;
-import org.nmgns.bps.dktj.entity.Position;
+import org.nmgns.bps.dktj.entity.*;
 import org.nmgns.bps.dktj.service.InterestShareInfoSerivce;
 import org.nmgns.bps.system.utils.PageData;
 import org.nmgns.bps.system.utils.base.ResponseJson;
@@ -72,6 +69,30 @@ public class InterestShareInfoController {
     }
 
     /**
+     * 获取利息明细
+     * @param isi
+     */
+    @RequestMapping("/get")
+    @PreAuthorize("hasAuthority('dktj:employeeinterest:get')")
+    public ResponseJson getInterestList(@RequestBody InterestShareInfo isi){
+        ResponseJson responseJson = new ResponseJson();
+
+        try {
+            PageData<InterestShareInfo> loanPageData = interestShareInfoSerivce.findPage(isi);
+            responseJson.setSuccess(true);
+            responseJson.setData(loanPageData.getList());
+            responseJson.setTotal(loanPageData.getTotal());
+            responseJson.setMsg("获取贷款利息明细成功");
+        }catch (Exception e){
+            e.printStackTrace();
+            responseJson.setSuccess(false);
+            responseJson.setMsg(e.getMessage());
+        }
+        return responseJson;
+    }
+
+
+    /**
      * 获取员工时点贷款利息
      * @param isi
      */
@@ -80,18 +101,17 @@ public class InterestShareInfoController {
     public ResponseJson getEmployeeInterestList(@RequestBody InterestShareInfo isi){
         ResponseJson responseJson = new ResponseJson();
 
-        List<InterestShareInfo> result = new ArrayList<>();
         try {
-            result = interestShareInfoSerivce.findEmployeeInterestList(isi);
+            PageData<InterestShareInfo> loanPageData = interestShareInfoSerivce.findEmployeeInterestList(isi);
+            responseJson.setSuccess(true);
+            responseJson.setData(loanPageData.getList());
+            responseJson.setTotal(loanPageData.getTotal());
+            responseJson.setMsg("获取员工的贷款时点利息成功");
         }catch (Exception e){
             e.printStackTrace();
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());
-            return responseJson;
         }
-
-        responseJson.setSuccess(true);
-        responseJson.setData(result);
         return responseJson;
     }
 
@@ -105,15 +125,16 @@ public class InterestShareInfoController {
         ResponseJson responseJson = new ResponseJson();
 
         try {
-            List<InterestShareInfo> result = interestShareInfoSerivce.findEmployeeAvgInterestList(isi);
+            PageData<InterestShareInfo> loanPageData = interestShareInfoSerivce.findEmployeeAvgInterestList(isi);
             responseJson.setSuccess(true);
-            responseJson.setData(result);
+            responseJson.setData(loanPageData.getList());
+            responseJson.setTotal(loanPageData.getTotal());
+            responseJson.setMsg("获取员工的贷款时点利息成功");
         }catch (Exception e){
             e.printStackTrace();
             responseJson.setSuccess(false);
             responseJson.setMsg(e.getMessage());
         }
-
         return responseJson;
     }
 

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -146,7 +147,8 @@ public class InterestShareInfoSerivce {
      * 获取员工贷款的时点利息
      * @param ei
      */
-    public List<InterestShareInfo> findEmployeeInterestList(InterestShareInfo ei) throws Exception{
+    public PageData<InterestShareInfo> findEmployeeInterestList(InterestShareInfo ei) throws Exception{
+        PageData<InterestShareInfo> interestPageData = new PageData<>();
         if (ei == null || StrUtil.isBlank(ei.getQueryType())) throw new Exception("获取员工时点贷款失败：未提供loanType");
         if (ei.getOrganizationId() == null) throw new Exception("获取员工时点贷款利息失败：未提供网点信息");
 
@@ -156,7 +158,22 @@ public class InterestShareInfoSerivce {
             ei.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/dktj/employeeinterest/empinterest").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "lno,blo", "u"));
         }
 
-        return interestShareInfoDao.findEmployeeLoanInterest(ei);
+        //分页获取员工列表以及员工总数
+        ei.getPage().setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
+        List<String> tellerList = interestShareInfoDao.findEmployeeLoanInterestPage(ei);
+        Long total = interestShareInfoDao.findEmployeeLoanInterestPageCount(ei);
+
+        //获取员工对应的分成信息列表
+        List<InterestShareInfo> tellerInterestList = new ArrayList<>();
+        for (String tellerCode : tellerList){
+            ei.setTellerCode(tellerCode);
+            tellerInterestList.addAll(interestShareInfoDao.findEmployeeLoanInterest(ei));
+        }
+
+        interestPageData.setTotal(total);
+        interestPageData.setList(tellerInterestList);
+
+        return interestPageData;
     }
 
     /**
@@ -185,7 +202,8 @@ public class InterestShareInfoSerivce {
      * 获取一个区间段内的员工利息汇总
      * @param ei
      */
-    public List<InterestShareInfo> findEmployeeAvgInterestList(InterestShareInfo ei) throws Exception{
+    public PageData<InterestShareInfo> findEmployeeAvgInterestList(InterestShareInfo ei) throws Exception{
+        PageData<InterestShareInfo> interestPageData = new PageData<>();
         if (ei == null || StrUtil.isBlank(ei.getQueryType())) throw new Exception("获取员工日均贷款失败：未提供loanType");
         if (ei.getOrganizationId() == null) throw new Exception("获取员工日均贷款失败：未提供网点信息");
         if (ei.getStartDate() == null || ei.getEndDate() == null) throw new Exception("获取员工日均贷款失败：未提供起止时间");
@@ -198,7 +216,22 @@ public class InterestShareInfoSerivce {
             ei.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/dktj/employeeinterest/empavginterest").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "lno,blo", "u"));
         }
 
-        return interestShareInfoDao.findEmployeeAvgLoanInterest(ei);
+        //分页获取员工列表以及员工总数
+        ei.getPage().setPageSize(DefaultConfig.DEFAULT_PAGE_SIZE);
+        List<String> tellerList = interestShareInfoDao.findEmployeeAvgLoanInterestPage(ei);
+        Long total = interestShareInfoDao.findEmployeeAvgLoanInterestPageCount(ei);
+
+        //获取员工对应的分成信息列表
+        List<InterestShareInfo> tellerInterestList = new ArrayList<>();
+        for (String tellerCode : tellerList){
+            ei.setTellerCode(tellerCode);
+            tellerInterestList.addAll(interestShareInfoDao.findEmployeeAvgLoanInterest(ei));
+        }
+
+        interestPageData.setTotal(total);
+        interestPageData.setList(tellerInterestList);
+
+        return interestPageData;
     }
 
     /**

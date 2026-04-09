@@ -49,4 +49,12 @@ public interface InterestShareInfoDao {
     Long findCount(InterestShareInfo isi);
 
     List<InterestShareInfo> findList(InterestShareInfo isi);
+
+    Long findEmployeeLoanInterestPageCount(InterestShareInfo isi);
+
+    List<String> findEmployeeLoanInterestPage(InterestShareInfo isi);
+
+    Long findEmployeeAvgLoanInterestPageCount(InterestShareInfo isi);
+
+    List<String> findEmployeeAvgLoanInterestPage(InterestShareInfo isi);
 }
