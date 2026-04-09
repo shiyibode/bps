@@ -196,7 +196,7 @@ public class InterestShareInfoController {
         try {
             PageData<InterestShareInfo> pageData = interestShareInfoSerivce.getValidPositionTellerList(isi);
             responseJson.setSuccess(true);
-            responseJson.setData(pageData);
+            responseJson.setData(pageData.getList());
             responseJson.setTotal(pageData.getTotal());
         }catch (Exception e){
             e.printStackTrace();
@@ -232,6 +232,10 @@ public class InterestShareInfoController {
     }
 
 
+    /**
+     * 获取已变更未复核的岗位责任人列表
+     * @param isi
+     */
     @RequestMapping("/positiontellerchecklist")
     @PreAuthorize("hasAuthority('dktj:employeeinterest:positiontellerchecklist')")
     public ResponseJson getAlterUncheckedPositionTellerList(@RequestBody InterestShareInfo isi){
@@ -251,6 +255,10 @@ public class InterestShareInfoController {
         return responseJson;
     }
 
+    /**
+     * 复核通过岗位责任人变更申请
+     * @param isiList
+     */
     @RequestMapping("/positiontellercheck")
     @PreAuthorize("hasAuthority('dktj:employeeinterest:positiontellercheck')")
     public ResponseJson positionTellerCheck(@RequestBody List<InterestShareInfo> isiList){
@@ -270,6 +278,10 @@ public class InterestShareInfoController {
         return responseJson;
     }
 
+    /**
+     * 复核拒绝岗位责任人变更申请
+     * @param isiList
+     */
     @RequestMapping("/positiontelleruncheck")
     @PreAuthorize("hasAuthority('dktj:employeeinterest:positiontelleruncheck')")
     public ResponseJson positionTellerUncheck(@RequestBody List<InterestShareInfo> isiList){

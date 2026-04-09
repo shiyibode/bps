@@ -73,7 +73,7 @@ public class TemplateController {
     /**
      * 获取账号对应的模板列表
      */
-    @RequestMapping("/getccounttemplatelist")
+    @RequestMapping("/getaccounttemplatelist")
     @PreAuthorize("hasAuthority('dktj:template:getaccounttemplatelist')")
     public ResponseJson getAccountTemplateList(@RequestBody AccountTemplate at){
         ResponseJson responseJson = new ResponseJson();

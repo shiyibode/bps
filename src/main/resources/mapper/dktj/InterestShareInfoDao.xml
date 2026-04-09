@@ -771,7 +771,7 @@
             LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
             LEFT JOIN public.t_sys_user u ON s.teller_code = u.code
             LEFT JOIN public.t_sys_organization lno ON dat.org_code = lno.code
-            LEFT JOIN (SELECT loan_account,cust_id,c_name FROM t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
+            LEFT JOIN (SELECT loan_account,cust_id,c_name FROM bps_78000.t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM bps_78000.t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
         <where>
             s.valid_flag = TRUE AND dat.valid_flag = TRUE
             <if test="organizationId != null" >
@@ -815,14 +815,14 @@
         SELECT
             count(*)
         FROM
-        t_dktj_account_share_info s
-        LEFT JOIN t_dktj_account_template dat ON s.account_template_id = dat.id
-        LEFT JOIN t_dktj_template t ON dat.template_id = t.id
-        LEFT JOIN t_dktj_template_detail td ON s.template_detail_id = td.id
-        LEFT JOIN t_dktj_position p ON td.position_id = p.id
-        LEFT JOIN t_sys_user u ON s.teller_code = u.code
-        LEFT JOIN t_sys_organization lno ON dat.org_code = lno.code
-        LEFT JOIN (SELECT loan_account,cust_id,c_name FROM t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
+        bps_78000.t_dktj_account_share_info s
+        LEFT JOIN bps_78000.t_dktj_account_template dat ON s.account_template_id = dat.id
+        LEFT JOIN bps_78000.t_dktj_template t ON dat.template_id = t.id
+        LEFT JOIN bps_78000.t_dktj_template_detail td ON s.template_detail_id = td.id
+        LEFT JOIN bps_78000.t_dktj_position p ON td.position_id = p.id
+        LEFT JOIN public.t_sys_user u ON s.teller_code = u.code
+        LEFT JOIN public.t_sys_organization lno ON dat.org_code = lno.code
+        LEFT JOIN (SELECT loan_account,cust_id,c_name FROM bps_78000.t_ods_t03_loancrd_inf_h WHERE date = (SELECT max(date) FROM bps_78000.t_ods_t03_loancrd_inf_h)) i ON i.loan_account = dat.account_no
         <where>
             s.valid_flag = TRUE AND dat.valid_flag = TRUE
             <if test="organizationId != null" >
