@@ -70,7 +70,7 @@ public class TemplateSerivce {
      */
     @Transactional(rollbackFor = Exception.class)
     public PageData<AccountTemplate> findAccountTemplateList(AccountTemplate at) throws Exception{
-        if (at == null || at.getParentId() == null) throw new Exception("未设置分页条件");
+//        if (at == null || at.getParentId() == null) throw new Exception("未设置分页条件");
 
         at.getSqlMap().put("dsf", DataScopeUtils.dataScopeFilter(apiService.getApiByUri("/dktj/template/getaccounttemplatelist").getId(), userUtils.getCurrentLoginedUserIncludeRole(), "o", ""));
 

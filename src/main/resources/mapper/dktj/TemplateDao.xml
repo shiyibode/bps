@@ -295,7 +295,7 @@
             bps_78000.t_dktj_account_template dat
             left join bps_78000.t_dktj_template t on dat.template_id = t.id
             left join bps_78000.t_dktj_employee_customer ec on ec.account_no = dat.account_no and ec.org_code = dat.org_code
-            LEFT JOIN t_sys_organization o on dat.org_code = o.code
+            LEFT JOIN public.t_sys_organization o on dat.org_code = o.code
         <where>
             dat.valid_flag = true and ec.valid_flag = true
             <if test="organizationId != null" >
@@ -336,7 +336,7 @@
             bps_78000.t_dktj_account_template dat
             left join bps_78000.t_dktj_template t on dat.template_id = t.id
             left join bps_78000.t_dktj_employee_customer ec on ec.account_no = dat.account_no and ec.org_code = dat.org_code
-            LEFT JOIN t_sys_organization o on dat.org_code = o.code
+            LEFT JOIN public.t_sys_organization o on dat.org_code = o.code
         <where>
             dat.valid_flag = true and ec.valid_flag = true
             <if test="organizationId != null" >
@@ -358,11 +358,8 @@
         <!-- 数据范围过滤 -->
         ${sqlMap.dsf}
         <choose>
-            <when test="page !=null and page.sorters != null">
-                ORDER BY
-                <foreach collection="page.sorters" item="sorter" index="index" separator=",">
-                    ${sorter.property} ${sorter.direction}
-                </foreach>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
             </when>
             <otherwise>
                 ORDER BY dat.start_date DESC,dat.account_no asc
